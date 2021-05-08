@@ -16,8 +16,8 @@ KP_PAIRS = [[5, 6], [6, 12], [12, 11], [11, 5],
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--cfg', default='evopose2d_M_f32.yaml')
-    parser.add_argument('-p', '--coco-path', required=True,
+    parser.add_argument('-c', '--cfg', default='./configs/evopose2d_M_f32.yaml')
+    parser.add_argument('-p', '--coco-path', required=True, default='./data/',
                         help='Path to folder containing COCO images and annotation directories.')
     parser.add_argument('-i', '--img-id', type=int, default=785)
     parser.add_argument('--alpha', type=float, default=0.8)
