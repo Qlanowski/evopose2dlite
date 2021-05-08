@@ -36,9 +36,10 @@ def tf_example(sample_dict):
     return tf.train.Example(features=tf.train.Features(feature=features))
 
 
-def load_data(annot_path, det_path=None, split='train'):
+def load_data(annot_path, foot_path, det_path=None, split='train'):
 
     coco = COCO(annot_path)
+    foot_coco = COCO(foot_path)
     coco_path = '/'.join(annot_path.split('/')[:-2])
 
     data = []
@@ -46,6 +47,11 @@ def load_data(annot_path, det_path=None, split='train'):
     if det_path is None:
         for aid in coco.anns.keys():
             ann = coco.anns[aid]
+            if aid in foot_coco.anns:
+                ann['keypoints'].extend(foot_coco.anns[aid]["keypoints"])
+                ann['num_keypoints'] = foot_coco.anns[aid]["num_keypoints"]
+            else:
+                ann['keypoints'].extend([0 for i in range(18)])
             joints = ann['keypoints']
             if split == 'train':
                 if (ann['image_id'] not in coco.imgs) or ann['iscrowd'] or (np.sum(joints[2::3]) == 0) or (
@@ -94,7 +100,7 @@ def load_data(annot_path, det_path=None, split='train'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--coco-path', default='./data/')
-    parser.add_argument('--write-dir', default='./data/tfrecords')
+    parser.add_argument('--write-dir', default='./data/tfrecords_foot')
     parser.add_argument('--splits', nargs='+', default=['train', 'val'])
     parser.add_argument('--shard-size', type=int, default=512)
     parser.add_argument('--dets', default=None)
@@ -102,7 +108,9 @@ if __name__ == '__main__':
 
     annot_dict = {
         'train': osp.join(args.coco_path, 'annotations/person_keypoints_train2017.json'),
+        'train_foot': osp.join(args.coco_path, 'annotations/person_keypoints_train2017_foot_v1.json'),
         'val': osp.join(args.coco_path, 'annotations/person_keypoints_val2017.json'),
+        'val_foot': osp.join(args.coco_path, 'annotations/person_keypoints_val2017_foot_v1.json'),
         'test': osp.join(args.coco_path, 'annotations/image_info_test-dev2017.json'),
     }
 
@@ -113,7 +121,7 @@ if __name__ == '__main__':
             if split == 'val':
                 write_subdir = osp.join(write_subdir, 'dets')
 
-        data = load_data(annot_dict[split], det_path=args.dets, split=split)
+        data = load_data(annot_dict[split], annot_dict[f'{split}_foot'], det_path=args.dets, split=split)
         os.makedirs(write_subdir, exist_ok=True)
 
         i = 0
