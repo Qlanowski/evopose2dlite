@@ -4,11 +4,11 @@ cn = CN(new_allowed=True)
 
 cn.DATASET = CN(new_allowed=True)
 cn.DATASET.NAME = 'COCO'
-cn.DATASET.TFRECORDS = r'C:\Users\ulano\source\repos\evopose2d\data\tfrecords'
-cn.DATASET.ANNOT = r'C:\Users\ulano\source\repos\evopose2d\data\annotations\person_keypoints_val2017.json'
+cn.DATASET.TFRECORDS = r'C:\Users\ulano\source\repos\evopose2dlite\data\tfrecords_foot'
+cn.DATASET.ANNOT = r'C:\Users\ulano\source\repos\evopose2dlite\data\annotations\person_keypoints_val2017.json'
 cn.DATASET.TRAIN_SAMPLES = 149813
 cn.DATASET.VAL_SAMPLES = 11004
-cn.DATASET.KP_FLIP = [0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15]
+cn.DATASET.KP_FLIP = [0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 20, 21, 22, 17, 18, 19]
 cn.DATASET.KP_UPPER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 cn.DATASET.KP_LOWER = []
 cn.DATASET.BGR = False
@@ -16,7 +16,7 @@ cn.DATASET.NORM = True
 cn.DATASET.MEANS = [0.485, 0.456, 0.406]  # imagenet means RGB
 cn.DATASET.STDS = [0.229, 0.224, 0.225]
 cn.DATASET.INPUT_SHAPE = [256, 192, 3]
-cn.DATASET.OUTPUT_SHAPE = [64, 48, 17]
+cn.DATASET.OUTPUT_SHAPE = [64, 48, 23]
 cn.DATASET.SIGMA = 2 * cn.DATASET.OUTPUT_SHAPE[0] / 64
 cn.DATASET.FLIP_PROB = 0.5
 cn.DATASET.HALF_BODY_PROB = 0.

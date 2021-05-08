@@ -12,7 +12,7 @@ def parse_record(record):
         'image_raw': tf.io.FixedLenFeature([], tf.string),
         'img_id': tf.io.FixedLenFeature([], tf.int64),
         'bbox': tf.io.FixedLenFeature([4, ], tf.float32),
-        'joints': tf.io.FixedLenFeature([51, ], tf.int64),
+        'joints': tf.io.FixedLenFeature([69, ], tf.int64),
         'score': tf.io.FixedLenFeature([], tf.float32)
     }
     example = tf.io.parse_single_example(record, feature_description)
@@ -233,8 +233,12 @@ if __name__ == '__main__':
     cfg.DATASET.HALF_BODY_PROB = 1.
 
     ds = load_tfds(cfg, 'train', det=False, predict_kp=True, drop_remainder=False)
-    for i, (id, img, kp, M, score) in enumerate(ds):
-        cv2.imshow('', visualize(np.uint8(img[0]), kp[0, :, :2].numpy(), kp[0, :, -1].numpy()))
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+    for i, (id, img, kps, M, score) in enumerate(ds):
+        f = 18 * 3 - 1
+        for i in range(cfg.TRAIN.BATCH_SIZE):
+            kp = kps[i]
+            if np.sum(kp[:,2][17:])>0:
+                cv2.imshow('', visualize(np.uint8(img[i]), kp[:, :2].numpy(), kp[:, -1].numpy()))
+                cv2.waitKey()
+                cv2.destroyAllWindows()
 

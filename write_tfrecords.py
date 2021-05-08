@@ -48,11 +48,12 @@ def load_data(annot_path, foot_path, det_path=None, split='train'):
         for aid in coco.anns.keys():
             ann = coco.anns[aid]
             if aid in foot_coco.anns:
-                ann['keypoints'].extend(foot_coco.anns[aid]["keypoints"])
+                ann['keypoints'] = foot_coco.anns[aid]["keypoints"]
                 ann['num_keypoints'] = foot_coco.anns[aid]["num_keypoints"]
             else:
                 ann['keypoints'].extend([0 for i in range(18)])
             joints = ann['keypoints']
+            
             if split == 'train':
                 if (ann['image_id'] not in coco.imgs) or ann['iscrowd'] or (np.sum(joints[2::3]) == 0) or (
                         ann['num_keypoints'] == 0):
@@ -90,7 +91,7 @@ def load_data(annot_path, foot_path, det_path=None, split='train'):
             d = dict(img_id=det['image_id'],
                      img_path=osp.join(coco_path, 'images', img_name),
                      bbox=det['bbox'],
-                     joints=[0 for _ in range(17*3)],
+                     joints=[0 for _ in range(23*3)],
                      score=det['score'])
             data.append(d)
 
