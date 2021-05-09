@@ -29,9 +29,11 @@ def mse(y_actual, y_pred):
 
 
 def setup_wandb(cfg, model):
-    with open ("wandb_api_key.txt", "r") as key_file:
-        key = key_file.readlines()[0]
-        os.environ["WANDB_API_KEY"] = key
+    key_path = 'wandb_api_key.txt"
+    if os.path.isfile(key_path):
+        with open (key_path, "r") as key_file:
+            key = key_file.readlines()[0]
+            os.environ["WANDB_API_KEY"] = key
 
     parameters = '{:.2f}M'.format(model.count_params()/1e6)
     flops = '{:.2f}G'.format(get_flops(model)/2/1e9)
