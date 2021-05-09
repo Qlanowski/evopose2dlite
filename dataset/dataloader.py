@@ -12,7 +12,7 @@ def parse_record(record):
         'image_raw': tf.io.FixedLenFeature([], tf.string),
         'img_id': tf.io.FixedLenFeature([], tf.int64),
         'bbox': tf.io.FixedLenFeature([4, ], tf.float32),
-        'joints': tf.io.FixedLenFeature([69, ], tf.int64),
+        'joints': tf.io.FixedLenFeature([51, ], tf.int64),
         'score': tf.io.FixedLenFeature([], tf.float32)
     }
     example = tf.io.parse_single_example(record, feature_description)
@@ -191,7 +191,7 @@ def load_tfds(cfg, split, det=False, predict_kp=False, drop_remainder=True):
     record_subdir = osp.join(cfg.DATASET.TFRECORDS, split)
     if split == 'val' and det:
         record_subdir = osp.join(record_subdir, 'dets')
-    file_pattern = osp.join(record_subdir, '*.tfrecord')
+    file_pattern = osp.join(record_subdir, '*.tfrecord').replace("\\","/")
     AUTO = tf.data.experimental.AUTOTUNE
     ds = tf.data.Dataset.list_files(file_pattern, shuffle=True)
     ds = ds.interleave(tf.data.TFRecordDataset,

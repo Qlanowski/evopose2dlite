@@ -13,22 +13,25 @@ MODEL:
   FINAL_KERNEL: 1
 
 TRAIN:
-  BATCH_SIZE: 512
-  EPOCHS: 200
+  BATCH_SIZE: 10
+  EPOCHS: 10
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
 
 VAL:
-  BATCH_SIZE: 512
+  BATCH_SIZE: 10
   DROP_REMAINDER: true
-  DET: true
+  DET: false
 
 DATASET:
   INPUT_SHAPE: [256, 192, 3]
-  TFRECORDS: 'gs://rangle/tfrecords_foot_small'
+  OUTPUT_SHAPE: [64, 48, 17]
+  TFRECORDS: 'gs://rangle/tfrecordsOriginal_small'
   ANNOT: '/home/user/coco/annotations/person_keypoints_val2017.json'
   CACHE: true
   BFLOAT16: false
+  TRAIN_SAMPLES: 2048
+  VAL_SAMPLES: 1024
 
 

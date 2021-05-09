@@ -26,7 +26,7 @@ VAL:
 
 DATASET:
   INPUT_SHAPE: [384, 288, 3]
-  TFRECORDS: 'gs://bucket/TF2-SimpleHumanPose/tfrecords'
+  TFRECORDS: 'gs://rangle/tfrecords_foot_small'
   ANNOT: '/home/user/coco/annotations/person_keypoints_val2017.json'
   CACHE: true
   BFLOAT16: false
