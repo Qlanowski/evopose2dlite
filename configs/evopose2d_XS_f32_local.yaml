@@ -31,7 +31,7 @@ DATASET:
   ANNOT: '/home/user/coco/annotations/person_keypoints_val2017.json'
   CACHE: true
   BFLOAT16: false
-  TRAIN_SAMPLES: 2048
-  VAL_SAMPLES: 1024
+  TRAIN_SAMPLES: 512
+  VAL_SAMPLES: 512
 
 

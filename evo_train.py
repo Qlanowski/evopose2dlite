@@ -27,6 +27,12 @@ def mse_loss(model, images, targets, valid, training=True):
     l2_loss = tf.cast(sum(model.losses), tf.float32)
     return loss, l2_loss
 
+@tf.function
+def mse(y_actual, y_pred):
+    valid = tf.cast(tf.math.reduce_max(y_actual, axis=(1, 2)) > 0, dtype=tf.float32)
+    valid_mask = tf.reshape(valid, [tf.shape(y_actual)[0], 1, 1, tf.shape(valid)[-1]])
+    return tf.reduce_mean(tf.square(y_actual - y_pred) * valid_mask)
+
 
 def train(strategy, cfg):
     os.makedirs(cfg.MODEL.SAVE_DIR, exist_ok=True)
@@ -72,8 +78,8 @@ def train(strategy, cfg):
             model = HRNet(cfg)
         elif cfg.MODEL.TYPE == 'evopose':
             model = EvoPose(cfg)
-        train_loss = tf.keras.metrics.Mean()
-        val_loss = tf.keras.metrics.Mean()
+
+        model.compile(optimizer=optimizer, loss=mse)
 
     cfg.DATASET.OUTPUT_SHAPE = model.output_shape[1:]
     cfg.DATASET.SIGMA = 2 * cfg.DATASET.OUTPUT_SHAPE[0] / 64
@@ -83,90 +89,108 @@ def train(strategy, cfg):
 
     train_ds = load_tfds(cfg, 'train')
     train_ds = strategy.experimental_distribute_dataset(train_ds)
-    train_iterator = iter(train_ds)
+    # train_iterator = iter(train_ds)
 
     if cfg.TRAIN.VAL:
         val_ds = load_tfds(cfg, 'val')
         val_ds = strategy.experimental_distribute_dataset(val_ds)
 
-    @tf.function
-    def train_step(train_iterator):
-        def step_fn(inputs):
-            imgs, targets, valid = inputs
-            with tf.GradientTape() as tape:
-                loss, l2_loss = mse_loss(model, imgs, targets, valid, training=True)
-                scaled_loss = (loss + l2_loss) / strategy.num_replicas_in_sync
-            grads = tape.gradient(scaled_loss, model.trainable_variables)
-            optimizer.apply_gradients(list(zip(grads, model.trainable_variables)))
-            train_loss.update_state(loss)
-        strategy.run(step_fn, args=(next(train_iterator),))
+    # @tf.function
+    # def train_step(train_iterator):
+    #     def step_fn(inputs):
+    #         imgs, targets, valid = inputs
+    #         with tf.GradientTape() as tape:
+    #             loss, l2_loss = mse_loss(model, imgs, targets, valid, training=True)
+    #             scaled_loss = (loss + l2_loss) / strategy.num_replicas_in_sync
+    #         grads = tape.gradient(scaled_loss, model.trainable_variables)
+    #         optimizer.apply_gradients(list(zip(grads, model.trainable_variables)))
+    #         train_loss.update_state(loss)
+    #     strategy.run(step_fn, args=(next(train_iterator),))
 
-    @tf.function
-    def val_step(dist_inputs):
-        def step_fn(inputs):
-            imgs, targets, valid = inputs
-            loss, _ = mse_loss(model, imgs, targets, valid, training=False)
-            val_loss.update_state(loss)
-        strategy.run(step_fn, args=(dist_inputs,))
+    # @tf.function
+    # def val_step(dist_inputs):
+    #     def step_fn(inputs):
+    #         imgs, targets, valid = inputs
+    #         loss, _ = mse_loss(model, imgs, targets, valid, training=False)
+    #         val_loss.update_state(loss)
+    #     strategy.run(step_fn, args=(dist_inputs,))
 
     print('Training {} ({:.2f}M / {:.2f}G) on {} for {} epochs'
           .format(cfg.MODEL.NAME, meta_data['parameters']/1e6,
                   meta_data['flops']/2/1e9, cfg.TRAIN.ACCELERATOR, cfg.TRAIN.EPOCHS))
 
-    epoch = 1
-    ts = time()
-    while epoch <= cfg.TRAIN.EPOCHS:
-        te = time()
-        for i in range(spe):
-            train_step(train_iterator)
-            if cfg.TRAIN.DISP:
-                print('epoch {} ({}/{}) | loss: {:.1f}'
-                      .format(epoch, i + 1, spe, train_loss.result().numpy()))
-        meta_data['train_loss'].append(train_loss.result().numpy())
+    # model.summary()
 
-        if cfg.TRAIN.VAL:
-            for i, batch in enumerate(val_ds):
-                val_step(batch)
-                if cfg.TRAIN.DISP:
-                    print('val {} ({}/{}) | loss: {:.1f}'
-                      .format(epoch, i + 1, spv, val_loss.result().numpy()))
-            meta_data['val_loss'].append(val_loss.result().numpy())
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=f'./models/{cfg.MODEL.NAME}/model.h5',
+        save_weights_only=True,
+        monitor='val_loss',
+        mode='min',
+        save_best_only=True)
 
-            if cfg.VAL.SAVE_BEST:
-                if epoch == 1:
-                    best_weights = model.get_weights()
-                    best_loss = val_loss.result().numpy()
-                    if cfg.TRAIN.DISP:
-                        print('Cached model weights')
-                elif val_loss.result().numpy() < best_loss:
-                    best_weights = model.get_weights()
-                    best_loss = val_loss.result().numpy()
-                    if cfg.TRAIN.DISP:
-                        print('Cached model weights')
+    history = model.fit(train_ds, epochs=cfg.TRAIN.EPOCHS, verbose=1,
+                        validation_data=val_ds, 
+                        validation_steps=spv, 
+                        steps_per_epoch=spe,
+                        callbacks=[model_checkpoint_callback])
 
-        train_loss.reset_states()
-        val_loss.reset_states()
+    with open(f'./models/{cfg.MODEL.NAME}/training.history', 'wb') as file_pi:
+        pickle.dump(history.history, file_pi)
 
-        if cfg.TRAIN.SAVE_EPOCHS and epoch % cfg.TRAIN.SAVE_EPOCHS == 0:
-            model.save(osp.join(cfg.MODEL.SAVE_DIR, '{}_ckpt{:03d}.h5'
-                                .format(cfg.MODEL.NAME, epoch)), save_format='h5')
-            print('Saved checkpoint to', osp.join(cfg.MODEL.SAVE_DIR, '{}_ckpt{:03d}.h5'
-                                            .format(cfg.MODEL.NAME, epoch)))
+    # epoch = 1
+    # ts = time()
+    # while epoch <= cfg.TRAIN.EPOCHS:
+    #     te = time()
+    #     for i in range(spe):
+    #         train_step(train_iterator)
+    #         if cfg.TRAIN.DISP:
+    #             print('epoch {} ({}/{}) | loss: {:.1f}'
+    #                   .format(epoch, i + 1, spe, train_loss.result().numpy()))
+    #     meta_data['train_loss'].append(train_loss.result().numpy())
 
-        if cfg.TRAIN.SAVE_META:
-            pickle.dump(meta_data, open(osp.join(cfg.MODEL.SAVE_DIR,
-                                                 '{}_meta.pkl'.format(cfg.MODEL.NAME)), 'wb'))
+    #     if cfg.TRAIN.VAL:
+    #         for i, batch in enumerate(val_ds):
+    #             val_step(batch)
+    #             if cfg.TRAIN.DISP:
+    #                 print('val {} ({}/{}) | loss: {:.1f}'
+    #                   .format(epoch, i + 1, spv, val_loss.result().numpy()))
+    #         meta_data['val_loss'].append(val_loss.result().numpy())
 
-        if epoch > 1 and cfg.TRAIN.DISP:
-            est_time = (cfg.TRAIN.EPOCHS - epoch) * (time() - te) / 3600
-            print('Estimated time remaining: {:.2f} hrs'.format(est_time))
+    #         if cfg.VAL.SAVE_BEST:
+    #             if epoch == 1:
+    #                 best_weights = model.get_weights()
+    #                 best_loss = val_loss.result().numpy()
+    #                 if cfg.TRAIN.DISP:
+    #                     print('Cached model weights')
+    #             elif val_loss.result().numpy() < best_loss:
+    #                 best_weights = model.get_weights()
+    #                 best_loss = val_loss.result().numpy()
+    #                 if cfg.TRAIN.DISP:
+    #                     print('Cached model weights')
 
-        epoch += 1
+    #     train_loss.reset_states()
+    #     val_loss.reset_states()
 
-    meta_data['training_time'] = time() - ts
+    #     if cfg.TRAIN.SAVE_EPOCHS and epoch % cfg.TRAIN.SAVE_EPOCHS == 0:
+    #         model.save(osp.join(cfg.MODEL.SAVE_DIR, '{}_ckpt{:03d}.h5'
+    #                             .format(cfg.MODEL.NAME, epoch)), save_format='h5')
+    #         print('Saved checkpoint to', osp.join(cfg.MODEL.SAVE_DIR, '{}_ckpt{:03d}.h5'
+    #                                         .format(cfg.MODEL.NAME, epoch)))
 
-    if cfg.VAL.SAVE_BEST:
-        model.set_weights(best_weights)
+    #     if cfg.TRAIN.SAVE_META:
+    #         pickle.dump(meta_data, open(osp.join(cfg.MODEL.SAVE_DIR,
+    #                                              '{}_meta.pkl'.format(cfg.MODEL.NAME)), 'wb'))
+
+    #     if epoch > 1 and cfg.TRAIN.DISP:
+    #         est_time = (cfg.TRAIN.EPOCHS - epoch) * (time() - te) / 3600
+    #         print('Estimated time remaining: {:.2f} hrs'.format(est_time))
+
+    #     epoch += 1
+
+    # meta_data['training_time'] = time() - ts
+
+    # if cfg.VAL.SAVE_BEST:
+    #     model.set_weights(best_weights)
 
     return model, meta_data
 
