@@ -2,3 +2,5 @@ data
 .vscode
 models
 __pycache__
+wandb_api_key.txt
+wandb
