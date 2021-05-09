@@ -185,6 +185,9 @@ if __name__ == '__main__':
         cfg.TRAIN.ACCELERATOR = 'GPU/CPU'
     cfg.merge_from_file('configs/' + args.cfg)
     cfg.MODEL.NAME = args.cfg.split('.yaml')[0]
+
+    if cfg.DATASET.OUTPUT_SHAPE[-1] == 17:
+        cfg.DATASET.KP_FLIP = cfg.DATASET.KP_FLIP[:17]
     model, meta_data = train(strategy, cfg)
     model.save(osp.join(cfg.MODEL.SAVE_DIR, '{}.h5'.format(cfg.MODEL.NAME)), save_format='h5')
     pickle.dump(meta_data, open(osp.join(cfg.MODEL.SAVE_DIR,

@@ -7,12 +7,12 @@ import tensorflow as tf
 from tensorflow.python.keras.layers.preprocessing import image_preprocessing as image_ops
 
 
-def parse_record(record):
+def parse_record(record, output_shape):
     feature_description = {
         'image_raw': tf.io.FixedLenFeature([], tf.string),
         'img_id': tf.io.FixedLenFeature([], tf.int64),
         'bbox': tf.io.FixedLenFeature([4, ], tf.float32),
-        'joints': tf.io.FixedLenFeature([51, ], tf.int64),
+        'joints': tf.io.FixedLenFeature([output_shape * 3, ], tf.int64),
         'score': tf.io.FixedLenFeature([], tf.float32)
     }
     example = tf.io.parse_single_example(record, feature_description)
@@ -200,7 +200,7 @@ def load_tfds(cfg, split, det=False, predict_kp=False, drop_remainder=True):
                        num_parallel_calls=AUTO)
     ds = ds.cache() if cfg.DATASET.CACHE else ds
     ds = ds.shuffle(10000).repeat() if split == 'train' else ds
-    ds = ds.map(lambda record: parse_record(record), num_parallel_calls=AUTO)
+    ds = ds.map(lambda record: parse_record(record, cfg.DATASET.OUTPUT_SHAPE[-1]), num_parallel_calls=AUTO)
     ds = ds.map(lambda id, img, bbox, kp, score:
                 preprocess(id, img, bbox, kp, score, cfg.DATASET, split, predict_kp),
                 num_parallel_calls=AUTO)
