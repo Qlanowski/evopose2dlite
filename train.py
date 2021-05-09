@@ -29,7 +29,7 @@ def mse(y_actual, y_pred):
 
 
 def setup_wandb(cfg, model):
-    key_path = 'wandb_api_key.txt"
+    key_path = "wandb_api_key.txt"
     if os.path.isfile(key_path):
         with open (key_path, "r") as key_file:
             key = key_file.readlines()[0]
