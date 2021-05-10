@@ -28,7 +28,7 @@ DATASET:
   INPUT_SHAPE: [256, 192, 3]
   OUTPUT_SHAPE: [64, 48, 17]
   TFRECORDS: 'gs://rangle/tfrecordsOriginal_small'
-  ANNOT: './data/annotations/person_keypoints_val2017.json'
+  ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
   TRAIN_SAMPLES: 512
