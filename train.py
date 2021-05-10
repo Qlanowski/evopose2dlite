@@ -168,9 +168,9 @@ if __name__ == '__main__':
         print('AP: {:.5f}'.format(AP))
         wandb.log({
             'mAP_org': mAP,
-            'AP_50_org' = AP_50,
-            'AP_75_org' = AP_75,
-            'AP_small_org' = AP_small,
-            'AP_medium_org' = AP_medium,
-            'AP_large_org' = AP_large
+            'AP_50_org': AP_50,
+            'AP_75_org': AP_75,
+            'AP_small_org': AP_small,
+            'AP_medium_org': AP_medium,
+            'AP_large_org': AP_large
         })
