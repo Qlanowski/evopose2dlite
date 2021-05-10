@@ -23,6 +23,7 @@ VAL:
   BATCH_SIZE: 64
   DROP_REMAINDER: true
   DET: false
+  FLIP: false
 
 DATASET:
   INPUT_SHAPE: [256, 192, 3]
