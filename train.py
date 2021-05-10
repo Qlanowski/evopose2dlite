@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
     if args.val:
         mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model)
-        print('AP: {:.5f}'.format(AP))
+        print('AP: {:.5f}'.format(mAP))
         wandb.log({
             'mAP_org': mAP,
             'AP_50_org': AP_50,
