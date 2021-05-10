@@ -119,7 +119,13 @@ def validate(strategy, cfg, model=None, split='val'):
             cocoEval.evaluate()
             cocoEval.accumulate()
             cocoEval.summarize()
-        return cocoEval.stats[0]  # AP
+        mAP = cocoEval.stats[0]
+        AP_50 = cocoEval.stats[1]
+        AP_75 = cocoEval.stats[2]
+        AP_small = cocoEval.stats[3]
+        AP_medium = cocoEval.stats[4]
+        AP_large = cocoEval.stats[5]
+        return mAP, AP_50, AP_75, AP_small, AP_medium, AP_large  # AP
     
 
 if __name__ == '__main__':
@@ -145,7 +151,7 @@ if __name__ == '__main__':
     tpu, strategy = detect_hardware(args.tpu)
 
     if args.split == 'val':
-        AP = validate(strategy, cfg, split='val')      
+        AP, _ = validate(strategy, cfg, split='val')      
         print('AP: {:.5f}'.format(AP))
     else:
         validate(strategy, cfg, split='test')

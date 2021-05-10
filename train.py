@@ -164,8 +164,13 @@ if __name__ == '__main__':
     model = train(strategy, cfg)
 
     if args.val:
-        AP = validate(strategy, cfg, model)
+        mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model)
         print('AP: {:.5f}'.format(AP))
-        meta_data['AP'] = AP
-        pickle.dump(meta_data, open(osp.join(cfg.MODEL.SAVE_DIR,
-                                             '{}_meta.pkl'.format(cfg.MODEL.NAME)), 'wb'))
+        wandb.log({
+            'mAP_org': mAP,
+            'AP_50_org' = AP_50,
+            'AP_75_org' = AP_75,
+            'AP_small_org' = AP_small,
+            'AP_medium_org' = AP_medium,
+            'AP_large_org' = AP_large
+        })
