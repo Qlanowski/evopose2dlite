@@ -68,6 +68,58 @@ cn.MODEL.HEAD_ACTIVATION = 'swish'
 cn.MODEL.FINAL_KERNEL = 3
 cn.MODEL.SAVE_DIR = 'models'
 
+cn.EVAL = CN(new_allowed=True)
+cn.EVAL.NAMES = [
+    "Nose", 
+    "Left eye", 
+    "Right eye", 
+    "Left ear",
+    "Right ear",
+    "Left shoulder",
+    "Right shoulder",
+    "Left elbow",
+    "Right elbow",
+    "Left wrist",
+    "Right wrist",
+    "Left hip",
+    "Right hip",
+    "Left knee",
+    "Right knee",
+    "Left ankle",
+    "Right ankle",
+    "Left big toe",
+    "Left small toe",
+    "Left heel",
+    "Right big toe",
+    "Right small toe",
+    "Right heel",
+]
+cn.EVAL.SIGMA = [
+    0.026,
+    0.025,
+    0.025,
+    0.035,
+    0.035,
+    0.079,
+    0.079,
+    0.072,
+    0.072,
+    0.062,
+    0.062,
+    0.107,
+    0.107,
+    0.087,
+    0.087,
+    0.089,
+    0.089,
+    0.035, 
+    0.035,
+    0.035,
+    0.035,
+    0.035, 
+    0.035
+]
+
 cn.SEARCH = CN(new_allowed=True)
 
 

@@ -163,9 +163,9 @@ if __name__ == '__main__':
 
     model = train(strategy, cfg)
 
-    # if args.val:
-    #     AP = validate(strategy, cfg, model)
-    #     print('AP: {:.5f}'.format(AP))
-    #     meta_data['AP'] = AP
-    #     pickle.dump(meta_data, open(osp.join(cfg.MODEL.SAVE_DIR,
-    #                                          '{}_meta.pkl'.format(cfg.MODEL.NAME)), 'wb'))
+    if args.val:
+        AP = validate(strategy, cfg, model)
+        print('AP: {:.5f}'.format(AP))
+        meta_data['AP'] = AP
+        pickle.dump(meta_data, open(osp.join(cfg.MODEL.SAVE_DIR,
+                                             '{}_meta.pkl'.format(cfg.MODEL.NAME)), 'wb'))

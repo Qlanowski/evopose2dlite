@@ -1,3 +1,4 @@
+from pycocotools.coco import COCO
 import os
 import os.path as osp
 import pickle
@@ -181,3 +182,19 @@ def get_models(run_dir):
             meta_data = pickle.load(open(osp.join(run_dir, g, m), 'rb'))
             genotypes[np.int(m.split('_')[1])] = meta_data['config'].MODEL.GENOTYPE
     return meta_files, saved_models, genotypes
+
+
+def merge_coco_annotations(coco_path, split):
+    annot_path = osp.join(coco_path,f'person_keypoints_{split}2017.json')
+    foot_path = osp.join(coco_path,f'person_keypoints_{split}2017_foot_v1.json')
+    coco = COCO(annot_path)
+    foot_coco = COCO(foot_path)
+    for aid in coco.anns.keys():
+        ann = coco.anns[aid]
+        if aid in foot_coco.anns:
+            ann['keypoints'].extend(foot_coco.anns[aid]["keypoints"])
+            ann['num_keypoints'] = foot_coco.anns[aid]["num_keypoints"]
+        else:
+            ann['keypoints'].extend([0 for i in range(18)])
+    return coco
+

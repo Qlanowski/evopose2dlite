@@ -13,14 +13,14 @@ MODEL:
   FINAL_KERNEL: 1
 
 TRAIN:
-  BATCH_SIZE: 10
-  EPOCHS: 1
+  BATCH_SIZE: 64
+  EPOCHS: 200
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
 
 VAL:
-  BATCH_SIZE: 10
+  BATCH_SIZE: 64
   DROP_REMAINDER: true
   DET: false
 
@@ -28,10 +28,10 @@ DATASET:
   INPUT_SHAPE: [256, 192, 3]
   OUTPUT_SHAPE: [64, 48, 17]
   TFRECORDS: 'gs://rangle/tfrecordsOriginal_small'
-  ANNOT: './data/annotations'
+  ANNOT: 'data/annotations'
   CACHE: true
   BFLOAT16: false
-  TRAIN_SAMPLES: 50
-  VAL_SAMPLES: 50
+  TRAIN_SAMPLES: 512
+  VAL_SAMPLES: 512
 
 

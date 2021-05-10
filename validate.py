@@ -3,14 +3,14 @@ import os.path as osp
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import argparse
 from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
+from coco_eval import COCOeval
 import tensorflow as tf
 import numpy as np
 from dataset.dataloader import load_tfds
 import math
 import json
 import cv2
-from utils import detect_hardware, suppress_stdout
+from utils import detect_hardware, suppress_stdout, merge_coco_annotations
 import pickle
 
 
@@ -46,7 +46,7 @@ def validate(strategy, cfg, model=None, split='val'):
 
     if split == 'val':
         with suppress_stdout():
-            coco = COCO(cfg.DATASET.ANNOT)
+            coco = merge_coco_annotations(cfg.DATASET.ANNOT, split)
 
     if model is None:
         with strategy.scope():
@@ -88,6 +88,9 @@ def validate(strategy, cfg, model=None, split='val'):
             hms = (hms + flip_hms) / 2.
 
         preds = get_preds(hms, Ms, cfg.DATASET.INPUT_SHAPE, cfg.DATASET.OUTPUT_SHAPE)
+        all_preds =np.zeros((preds.shape[0],23,3))
+        all_preds[:,:preds.shape[1],:] = preds
+        preds = all_preds
         kp_scores = preds[:, :, -1].copy()
 
         # rescore
@@ -117,7 +120,7 @@ def validate(strategy, cfg, model=None, split='val'):
             cocoEval.accumulate()
             cocoEval.summarize()
         return cocoEval.stats[0]  # AP
-
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -132,6 +135,9 @@ if __name__ == '__main__':
     cfg.merge_from_file('configs/' + args.cfg)
     cfg.MODEL.NAME = args.cfg.split('.')[0]
 
+    if cfg.DATASET.OUTPUT_SHAPE[-1] == 17:
+        cfg.DATASET.KP_FLIP = cfg.DATASET.KP_FLIP[:17]
+
     if args.ckpt:
         cfg.MODEL.NAME += '_{}'.format(args.ckpt)
     if args.det >= 0:
@@ -139,7 +145,7 @@ if __name__ == '__main__':
     tpu, strategy = detect_hardware(args.tpu)
 
     if args.split == 'val':
-        AP = validate(strategy, cfg, split='val')
+        AP = validate(strategy, cfg, split='val')      
         print('AP: {:.5f}'.format(AP))
     else:
         validate(strategy, cfg, split='test')
