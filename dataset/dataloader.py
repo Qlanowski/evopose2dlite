@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.layers.preprocessing import image_preprocessing as image_ops
 
+import plots as pl
 
 def parse_record(record, output_shape):
     feature_description = {
@@ -187,7 +188,7 @@ def generate_heatmaps(kp, DATASET):
     return heatmaps, valid
 
 
-def load_tfds(cfg, split, det=False, predict_kp=False, drop_remainder=True):
+def load_tfds(cfg, split, det=False, predict_kp=False, drop_remainder=True, visualize=False):
     record_subdir = osp.join(cfg.DATASET.TFRECORDS, split)
     if split == 'val' and det:
         record_subdir = osp.join(record_subdir, 'dets')
@@ -208,6 +209,11 @@ def load_tfds(cfg, split, det=False, predict_kp=False, drop_remainder=True):
         ds = ds.batch(cfg.TRAIN.BATCH_SIZE).prefetch(AUTO)
     else:
         ds = ds.batch(cfg.VAL.BATCH_SIZE, drop_remainder=drop_remainder).prefetch(AUTO)
+
+    if visualize:
+        ds = ds.map(lambda ids, imgs, kps, Ms, scores: (ids, imgs, kps, Ms, scores, *generate_heatmaps(kps, cfg.DATASET)),
+                    num_parallel_calls=AUTO)
+        return ds
     if not predict_kp:
         ds = ds.map(lambda imgs, kp: (imgs, *generate_heatmaps(kp, cfg.DATASET)),
                     num_parallel_calls=AUTO)
@@ -232,13 +238,15 @@ if __name__ == '__main__':
     cfg.DATASET.BGR = True
     cfg.DATASET.HALF_BODY_PROB = 1.
 
-    ds = load_tfds(cfg, 'train', det=False, predict_kp=True, drop_remainder=False)
-    for i, (id, img, kps, M, score) in enumerate(ds):
+    ds = load_tfds(cfg, 'train', det=False, predict_kp=True, drop_remainder=False, visualize=True)
+    for i, (ids, imgs, kps, Ms, scores, hms, valids) in enumerate(ds):
         f = 18 * 3 - 1
         for i in range(cfg.TRAIN.BATCH_SIZE):
             kp = kps[i]
-            if np.sum(kp[:,2][17:])>0:
-                cv2.imshow('', visualize(np.uint8(img[i]), kp[:, :2].numpy(), kp[:, -1].numpy()))
+            if np.sum(kp[:,2][17:]) > 0:
+                img = imgs[i]
+                pl.plot_image(np.uint8(img), hms[i], kp[:, -1].numpy())
+                cv2.imshow('', visualize(np.uint8(img), kp[:, :2].numpy(), kp[:, -1].numpy()))
                 cv2.waitKey()
                 cv2.destroyAllWindows()
 
