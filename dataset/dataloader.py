@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.layers.preprocessing import image_preprocessing as image_ops
 
-import plots as pl
+import dataset.plots as pl
 
 def parse_record(record, output_shape):
     feature_description = {
@@ -227,6 +227,20 @@ def visualize(img, joints, valid):
         elif v == 2:  # visible
             cv2.circle(img, tuple(joints[i]), 1, (0, 0, 255))
     return img
+
+
+def read_tfrecords(cfg, split, chunk, output_shape):
+    file = str(chunk).zfill(5)+'.tfrecord'
+
+    record_subdir = osp.join(cfg.DATASET.TFRECORDS, split)
+    file_path = osp.join(record_subdir, file).replace("\\","/")
+    records = []
+    for i, example in enumerate(tf.compat.v1.io.tf_record_iterator(file_path)):
+        print(i)
+        r = parse_record(example, output_shape)
+        records.append(r)
+
+    return records
 
 
 if __name__ == '__main__':

@@ -47,13 +47,18 @@ def load_data(annot_path, foot_path, det_path=None, split='train'):
     if det_path is None:
         for aid in coco.anns.keys():
             ann = coco.anns[aid]
-            if aid in foot_coco.anns:
-                ann['keypoints'] = foot_coco.anns[aid]["keypoints"]
+            if aid in foot_coco.anns: 
                 ann['num_keypoints'] = foot_coco.anns[aid]["num_keypoints"]
+                if split == 'train':
+                    ann['keypoints'] = foot_coco.anns[aid]["keypoints"]
+                elif split == 'val':
+                    ann['keypoints'].extend(foot_coco.anns[aid]["keypoints"])
+                else:
+                    raise Exception('split is not supported')
             else:
                 ann['keypoints'].extend([0 for i in range(18)])
             joints = ann['keypoints']
-            
+
             if split == 'train':
                 if (ann['image_id'] not in coco.imgs) or ann['iscrowd'] or (np.sum(joints[2::3]) == 0) or (
                         ann['num_keypoints'] == 0):

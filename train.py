@@ -122,12 +122,6 @@ def train(strategy, cfg):
           .format(cfg.MODEL.NAME, wandb_config.parameters,
                   wandb_config.flops, cfg.TRAIN.ACCELERATOR, cfg.TRAIN.EPOCHS))
 
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=f'./models/{cfg.MODEL.NAME}/model.h5',
-        save_weights_only=True,
-        monitor=['val_loss'],
-        mode='min',
-        save_best_only=True)
 
     model.fit(train_ds, epochs=cfg.TRAIN.EPOCHS, verbose=1,
                         validation_data=val_ds, 
@@ -163,7 +157,7 @@ if __name__ == '__main__':
 
     model = train(strategy, cfg)
 
-    if args.val:
+    if args.val == 1:
         mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model)
         print('AP: {:.5f}'.format(mAP))
         wandb.log({
