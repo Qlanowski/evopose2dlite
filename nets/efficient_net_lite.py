@@ -105,3 +105,4 @@ def EfficientNetLite(cfg):
     #     use_bias=True,
     #     kernel_regularizer=regularizer,
     #     name='final_conv')(x)
+    # return Model(backbone.input, x, name=f'EfficientNetLite_{cfg.MODEL.SIZE}')
