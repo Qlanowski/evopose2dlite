@@ -14,6 +14,7 @@ from dataset.coco import cn as cfg
 from nets.simple_basline import SimpleBaseline
 from nets.hrnet import HRNet
 from nets.evopose2d import EvoPose
+from nets.efficient_net_lite import EfficientNetLite
 from time import time
 import argparse
 from validate import validate
@@ -114,6 +115,8 @@ def train(strategy, cfg):
             model = HRNet(cfg)
         elif cfg.MODEL.TYPE == 'evopose':
             model = EvoPose(cfg)
+        elif cfg.MODEL.TYPE == 'eflite':
+            model = EfficientNetLite(cfg)
 
         model.compile(optimizer=optimizer, loss=mse)
 

@@ -31,7 +31,5 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
-  TRAIN_SAMPLES: 50
-  VAL_SAMPLES: 50
 
 
