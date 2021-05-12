@@ -6,6 +6,7 @@ cn.DATASET = CN(new_allowed=True)
 cn.DATASET.NAME = 'COCO'
 cn.DATASET.TFRECORDS = r'C:\Users\ulano\source\repos\evopose2dlite\data\tfrecords_foot'
 cn.DATASET.ANNOT = r'C:\Users\ulano\source\repos\evopose2dlite\data\annotations\person_keypoints_val2017.json'
+cn.DATASET.RUN_EXAMPLES = r'run_examples'
 cn.DATASET.TRAIN_SAMPLES = 149813
 cn.DATASET.VAL_SAMPLES = 11004
 cn.DATASET.KP_FLIP = [0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 20, 21, 22, 17, 18, 19]

@@ -4,10 +4,12 @@ import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 import numpy as np
+import cv2
+import shutil
 from lr_schedules import WarmupCosineDecay, WarmupPiecewise
 import os.path as osp
 from utils import get_flops, detect_hardware
-from dataset.dataloader import load_tfds
+from dataset.dataloader import load_tfds, prediction_examples
 from dataset.coco import cn as cfg
 from nets.simple_basline import SimpleBaseline
 from nets.hrnet import HRNet
@@ -132,12 +134,22 @@ def train(strategy, cfg):
                   wandb_config.flops, cfg.TRAIN.ACCELERATOR, cfg.TRAIN.EPOCHS))
 
 
+    # model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+    #     filepath=f'{cfg.MODEL.SAVE_DIR}/model_ckp.h5',
+    #     save_weights_only=False,
+    #     monitor='val_loss',
+    #     mode='min',
+    #     save_best_only=True)
+
+
     model.fit(train_ds, epochs=cfg.TRAIN.EPOCHS, verbose=1,
                         validation_data=val_ds, 
                         validation_steps=spv, 
                         steps_per_epoch=spe,
                         callbacks=[WandbCallback()])
-
+    # os.rename(f'{cfg.MODEL.SAVE_DIR}/model_ckp.h5', os.path.join(wandb.run.dir, "model_ckp.h5"))
+    # wandb.save(f'./models/{cfg.MODEL.SAVE_DIR}/model_ckp.h5')
+    
     return model
 
 
@@ -164,6 +176,7 @@ if __name__ == '__main__':
     cfg.TRAIN.TEST = args.test
 
     model = train(strategy, cfg)
+    shutil.copy2('configs/' + args.cfg, os.path.join(wandb.run.dir, "model_config.yaml"))
 
     if args.val == 1:
         if cfg.DATASET.OUTPUT_SHAPE[-1] == 23:
@@ -188,4 +201,7 @@ if __name__ == '__main__':
             'AP_medium_body': AP_medium,
             'AP_large_body': AP_large
         })
-        
+
+    imgs = prediction_examples(model, cfg)
+    images = [wandb.Image(img) for img in imgs]
+    wandb.log({"runners": images})  

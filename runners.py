@@ -3,11 +3,8 @@ import numpy as np
 import tensorflow as tf
 import argparse
 
-import dataset.plots as pl
 import dataset.dataloader as dl
-import wandb
 import os
-from PIL import Image
 
 from dataset.coco import cn as cfg
 
@@ -52,39 +49,10 @@ if __name__ == '__main__':
     # load the config .yaml file
     cfg.merge_from_file('configs/' + args.cfg)
     
-    # start_wandb()
-
-    model = tf.keras.models.load_model('models/{}.h5'.format(args.cfg.split('.yaml')[0]))
-
-    imgs = []
-    for img_path in os.listdir('run_examples'):
-        img_bytes = open(os.path.join('run_examples', img_path), 'rb').read()
-        img_org = tf.image.decode_jpeg(img_bytes, channels=3)
-        img = preprocess(img_org, cfg.DATASET)
-        hms = model.predict(tf.expand_dims(img, 0))
-        hms = tf.squeeze(hms)
-        preds = pl.get_preds(hms, img_org.shape)
-
-        img_cv = cv2.imread(os.path.join('run_examples', img_path))
-        overlay = img_cv.copy()
-
-        for i, (x, y, v) in enumerate(preds):
-            overlay = cv2.circle(overlay, (int(np.round(x)), int(np.round(y))), 2, [255, 255, 255], 2)
-
-        for p in KP_PAIRS:
-            if len(preds) > p[0] and len(preds) > p[1]:
-                overlay = cv2.line(overlay,
-                                tuple(np.int32(np.round(preds[p[0], :2]))),
-                                tuple(np.int32(np.round(preds[p[1], :2]))), [255, 255, 255], 2)
-
-        img = cv2.addWeighted(overlay, 0.8, img_cv, 1 - 0.8, 0)
-        im_pil = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        im_pil = Image.fromarray(im_pil)
-        imgs.append(im_pil)
-
-        cv2.imshow(img_path, img)
+    model = tf.keras.models.load_model('models/{}.h5'.format(args.cfg.split('.yaml')[0]), compile=False)
+    imgs = dl.prediction_examples(model, cfg)
+    for img in imgs:
+        opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        cv2.imshow("image", opencvImage)
         cv2.waitKey()
         cv2.destroyAllWindows()
-
-    # images = [wandb.Image(img) for img in imgs]
-    # wandb.log({"example": images})

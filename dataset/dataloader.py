@@ -1,7 +1,9 @@
 import math
+import os
 import os.path as osp
 
 import cv2
+from PIL import Image
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.layers.preprocessing import image_preprocessing as image_ops
@@ -228,6 +230,55 @@ def visualize(img, joints, valid):
             cv2.circle(img, tuple(joints[i]), 1, (0, 0, 255))
     return img
 
+
+def image_resize(img, DATASET):
+    img = tf.cast(img, tf.float32)
+
+    if DATASET.NORM:
+        img /= 255.
+        img -= [[DATASET.MEANS]]
+        img /= [[DATASET.STDS]]
+
+    img = tf.image.resize(img, (DATASET.INPUT_SHAPE[0], DATASET.INPUT_SHAPE[1]))
+
+    if DATASET.BFLOAT16:
+        img = tf.cast(img, tf.bfloat16)
+
+    return img
+
+def prediction_examples(model, cfg):
+    imgs = []
+    for img_path in os.listdir(cfg.DATASET.RUN_EXAMPLES):
+        img_bytes = open(osp.join(cfg.DATASET.RUN_EXAMPLES, img_path), 'rb').read()
+        img_org = tf.image.decode_jpeg(img_bytes, channels=3)
+        img = image_resize(img_org, cfg.DATASET)
+        hms = model.predict(tf.expand_dims(img, 0))
+        hms = tf.squeeze(hms)
+        preds = pl.get_preds(hms, img_org.shape)
+
+        img_cv = cv2.imread(os.path.join(cfg.DATASET.RUN_EXAMPLES, img_path))
+        overlay = img_cv.copy()
+
+        for i, (x, y, v) in enumerate(preds):
+            overlay = cv2.circle(overlay, (int(np.round(x)), int(np.round(y))), 2, [255, 255, 255], 2)
+
+        KP_PAIRS = [[5, 6], [6, 12], [12, 11], [11, 5],
+            [5, 7], [7, 9], [11, 13], [13, 15],
+            [6, 8], [8, 10], [12, 14], [14, 16], 
+            [15, 17],[15, 19],[17, 18],
+            [16, 20],[16, 21],[20, 21]]
+
+        for p in KP_PAIRS:
+            if len(preds) > p[0] and len(preds) > p[1]:
+                overlay = cv2.line(overlay,
+                                tuple(np.int32(np.round(preds[p[0], :2]))),
+                                tuple(np.int32(np.round(preds[p[1], :2]))), [255, 255, 255], 2)
+
+        img = cv2.addWeighted(overlay, 0.8, img_cv, 1 - 0.8, 0)
+        im_pil = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        im_pil = Image.fromarray(im_pil)
+        imgs.append(im_pil)
+    return imgs
 
 def read_tfrecords(cfg, split, chunk, output_shape):
     file = str(chunk).zfill(5)+'.tfrecord'
