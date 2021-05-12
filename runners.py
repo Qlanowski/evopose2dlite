@@ -30,15 +30,6 @@ def preprocess(img, DATASET):
 
     return img
 
-def start_wandb():
-    key_path = "wandb_api_key.txt"
-    if os.path.isfile(key_path):
-        with open (key_path, "r") as key_file:
-            key = key_file.readlines()[0]
-            os.environ["WANDB_API_KEY"] = key
-
-    wandb.init(project="images", group = "testing")
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--cfg', default='evopose2d_XS_f32.yaml')
