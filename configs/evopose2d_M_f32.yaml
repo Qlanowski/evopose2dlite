@@ -26,8 +26,9 @@ VAL:
 
 DATASET:
   INPUT_SHAPE: [384, 288, 3]
-  TFRECORDS: 'gs://rangle/tfrecords_foot_small'
-  ANNOT: '/home/user/coco/annotations/person_keypoints_val2017.json'
+  OUTPUT_SHAPE: [-1, -1, 23]
+  TFRECORDS: 'gs://rangle/tfrecords_foot'
+  ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
 
