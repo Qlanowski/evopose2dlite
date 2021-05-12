@@ -9,12 +9,12 @@ MODEL:
     [ 5, 4, 16, 2 ],
     [ 3, 2, 10, 1 ]
   ]
-  LOAD_WEIGHTS: false
+  LOAD_WEIGHTS: true
   FINAL_KERNEL: 1
 
 TRAIN:
   BATCH_SIZE: 512
-  EPOCHS: 8
+  EPOCHS: 10
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
@@ -23,13 +23,12 @@ VAL:
   BATCH_SIZE: 512
   DROP_REMAINDER: true
   DET: false
-  FLIP: false
 
 DATASET:
   INPUT_SHAPE: [256, 192, 3]
-  OUTPUT_SHAPE: [64, 48, 23]
+  OUTPUT_SHAPE: [-1, -1, 23]
   TFRECORDS: 'gs://rangle/tfrecords_foot'
-  ANNOT: 'data/annotations'
+  ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
 

@@ -9,7 +9,7 @@ MODEL:
     [ 5, 4, 16, 2 ],
     [ 3, 2, 10, 1 ]
   ]
-  LOAD_WEIGHTS: false
+  LOAD_WEIGHTS: true
   FINAL_KERNEL: 1
 
 TRAIN:
