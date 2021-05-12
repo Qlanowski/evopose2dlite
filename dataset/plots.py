@@ -74,7 +74,7 @@ def plot_image(img, pred_hm, valid):
 
 def get_preds(hms, img_shape):
     hms = hms.numpy()
-    preds = np.zeros((hms.shape[-1], 2))
+    preds = np.zeros((hms.shape[-1], 3))
     sh = img_shape[0] / hms.shape[0]
     sw = img_shape[1] / hms.shape[1]
 
@@ -96,6 +96,7 @@ def get_preds(hms, img_shape):
         y = max_y + 0.25 * dy
         preds[j, 0] = x * sw
         preds[j, 1] = y * sh
-
+        preds[j, 2] = hm.max() / 255
+        
     return preds
     
