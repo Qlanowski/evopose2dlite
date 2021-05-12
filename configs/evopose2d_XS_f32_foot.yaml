@@ -31,6 +31,6 @@ DATASET:
   TFRECORDS: 'gs://rangle/tfrecords_foot'
   ANNOT: 'data/annotations'
   CACHE: true
-  BFLOAT16: true
+  BFLOAT16: false
 
 

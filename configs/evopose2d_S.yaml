@@ -26,6 +26,7 @@ VAL:
 
 DATASET:
   INPUT_SHAPE: [256, 192, 3]
+  JOINTS: 23
   TFRECORDS: 'gs://bucket/TF2-SimpleHumanPose/tfrecords'
   ANNOT: '/home/user/coco/annotations/person_keypoints_val2017.json'
   CACHE: true

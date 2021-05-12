@@ -43,6 +43,7 @@ cn.TRAIN.WD = 1e-5
 cn.TRAIN.SAVE_EPOCHS = 0
 cn.TRAIN.SAVE_META = False
 cn.TRAIN.VAL = True
+cn.TRAIN.TEST = False
 
 cn.VAL = CN(new_allowed=True)
 cn.VAL.BATCH_SIZE = 64

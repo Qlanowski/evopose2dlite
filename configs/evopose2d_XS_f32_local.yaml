@@ -26,7 +26,7 @@ VAL:
 
 DATASET:
   INPUT_SHAPE: [256, 192, 3]
-  OUTPUT_SHAPE: [64, 48, 23]
+  OUTPUT_SHAPE: [-1, -1, 23]
   TFRECORDS: 'gs://rangle/tfrecords_foot_small'
   ANNOT: './data/annotations'
   CACHE: true

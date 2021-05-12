@@ -184,14 +184,14 @@ def get_models(run_dir):
     return meta_files, saved_models, genotypes
 
 
-def merge_coco_annotations(coco_path, split):
+def merge_coco_annotations(coco_path, split, clear_foot=False):
     annot_path = osp.join(coco_path,f'person_keypoints_{split}2017.json')
     foot_path = osp.join(coco_path,f'person_keypoints_{split}2017_foot_v1.json')
     coco = COCO(annot_path)
     foot_coco = COCO(foot_path)
     for aid in coco.anns.keys():
         ann = coco.anns[aid]
-        if aid in foot_coco.anns:
+        if aid in foot_coco.anns and clear_foot == False:
             ann['keypoints'].extend(foot_coco.anns[aid]["keypoints"])
             ann['num_keypoints'] = foot_coco.anns[aid]["num_keypoints"]
         else:

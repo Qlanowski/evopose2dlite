@@ -13,7 +13,6 @@ from nets.simple_basline import SimpleBaseline
 from nets.hrnet import HRNet
 from nets.evopose2d import EvoPose
 from time import time
-import pickle
 import argparse
 from validate import validate
 
@@ -39,9 +38,19 @@ def setup_wandb(cfg, model):
     parameters = '{:.2f}M'.format(model.count_params()/1e6)
     flops = '{:.2f}G'.format(get_flops(model)/2/1e9)
 
+    group = ''
+    if cfg.DATASET.OUTPUT_SHAPE[-1] == 23 and cfg.TRAIN.TEST:
+        group = "test body+foot"
+    elif cfg.DATASET.OUTPUT_SHAPE[-1] == 23 and cfg.TRAIN.TEST == False:
+        group = "valid body+foot"
+    elif cfg.DATASET.OUTPUT_SHAPE[-1] == 17 and cfg.TRAIN.TEST:
+        group = "test body"
+    elif cfg.DATASET.OUTPUT_SHAPE[-1] == 17 and cfg.TRAIN.TEST == False:
+        group = "valid body"
+
     wandb.init(
         project="rangle",
-        group=f'{cfg.MODEL.NAME}_{cfg.DATASET.OUTPUT_SHAPE[-1]}',
+        group = group,
         config = {
             "model": cfg.MODEL.NAME,
             "flops": flops,
@@ -56,7 +65,8 @@ def setup_wandb(cfg, model):
             "optimizer": "Adam",
             "train_samples": cfg.DATASET.TRAIN_SAMPLES,
             "val_samples": cfg.DATASET.VAL_SAMPLES,
-            "transfer": cfg.MODEL.LOAD_WEIGHTS
+            "transfer": cfg.MODEL.LOAD_WEIGHTS,
+            "bfloat16": cfg.DATASET.BFLOAT16
         })
     return wandb.config
 
@@ -69,8 +79,6 @@ def train(strategy, cfg):
 
     tf.random.set_seed(cfg.TRAIN.SEED)
     np.random.seed(cfg.TRAIN.SEED)
-
-    meta_data = {'train_loss': [], 'val_loss': [], 'config': cfg}
 
     spe = int(np.ceil(cfg.DATASET.TRAIN_SAMPLES / cfg.TRAIN.BATCH_SIZE))
     spv = cfg.DATASET.VAL_SAMPLES // cfg.VAL.BATCH_SIZE
@@ -130,10 +138,6 @@ def train(strategy, cfg):
                         steps_per_epoch=spe,
                         callbacks=[WandbCallback()])
 
-    # os.mkdir(f'./models/{cfg.MODEL.NAME}')
-    # with open(f'./models/{cfg.MODEL.NAME}/training.history', 'wb') as file_pi:
-    #     pickle.dump(history.history, file_pi)
-
     return model
 
 
@@ -142,7 +146,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--cfg', required=True)
     parser.add_argument('--tpu', default=None)
-    parser.add_argument('--val', default=1)
+    parser.add_argument('--val', type=int, default=1)
+    parser.add_argument('--test', type=bool, default=False)
     args = parser.parse_args()
 
     tpu, strategy = detect_hardware(args.tpu)
@@ -156,16 +161,31 @@ if __name__ == '__main__':
     if cfg.DATASET.OUTPUT_SHAPE[-1] == 17:
         cfg.DATASET.KP_FLIP = cfg.DATASET.KP_FLIP[:17]
 
+    cfg.TRAIN.TEST = args.test
+
     model = train(strategy, cfg)
 
     if args.val == 1:
-        mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model)
-        print('AP: {:.5f}'.format(mAP))
+        if cfg.DATASET.OUTPUT_SHAPE[-1] == 23:
+            mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=False)
+            print('AP body+foot: {:.5f}'.format(mAP))
+            wandb.log({
+                'mAP_body+foot': mAP,
+                'AP_50_body+foot': AP_50,
+                'AP_75_body+foot': AP_75,
+                'AP_small_body+foot': AP_small,
+                'AP_medium_body+foot': AP_medium,
+                'AP_large_body+foot': AP_large
+            })
+
+        mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=True)
+        print('AP body: {:.5f}'.format(mAP))
         wandb.log({
-            'mAP_org': mAP,
-            'AP_50_org': AP_50,
-            'AP_75_org': AP_75,
-            'AP_small_org': AP_small,
-            'AP_medium_org': AP_medium,
-            'AP_large_org': AP_large
+            'mAP_body': mAP,
+            'AP_50_body': AP_50,
+            'AP_75_body': AP_75,
+            'AP_small_body': AP_small,
+            'AP_medium_body': AP_medium,
+            'AP_large_body': AP_large
         })
+        

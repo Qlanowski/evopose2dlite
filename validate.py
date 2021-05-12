@@ -40,13 +40,13 @@ def get_preds(hms, Ms, input_shape, output_shape):
     return preds
 
 
-def validate(strategy, cfg, model=None, split='val'):
+def validate(strategy, cfg, model=None, split='val', clear_foot=False):
     cfg.DATASET.CACHE = False
     result_path = '{}/{}_{}.json'.format(cfg.MODEL.SAVE_DIR, cfg.MODEL.NAME, split)
 
     if split == 'val':
         with suppress_stdout():
-            coco = merge_coco_annotations(cfg.DATASET.ANNOT, split)
+            coco = merge_coco_annotations(cfg.DATASET.ANNOT, split, clear_foot)
 
     if model is None:
         with strategy.scope():
@@ -88,7 +88,7 @@ def validate(strategy, cfg, model=None, split='val'):
             hms = (hms + flip_hms) / 2.
 
         preds = get_preds(hms, Ms, cfg.DATASET.INPUT_SHAPE, cfg.DATASET.OUTPUT_SHAPE)
-        all_preds =np.zeros((preds.shape[0],23,3))
+        all_preds = np.zeros((preds.shape[0],23,3))
         all_preds[:,:preds.shape[1],:] = preds
         preds = all_preds
         kp_scores = preds[:, :, -1].copy()
