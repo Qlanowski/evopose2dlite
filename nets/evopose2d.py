@@ -187,10 +187,16 @@ def EvoPose(cfg):
             # The first block needs to take care of stride and filter size increase.
             if j > 0:
                 args['strides'] = 1
+                
+            if cfg.MODEL.DROPOUT:
+                drop_rate = drop_connect_rate * b / blocks
+            else:
+                drop_rate = 0
+
             x = block(
                 x,
                 activation,
-                drop_connect_rate * b / blocks,
+                drop_rate,
                 regularizer=regularizer,
                 name='block{}{}_'.format(i + 1, chr(j + 97)),
                 lite=cfg.MODEL.LITE,
