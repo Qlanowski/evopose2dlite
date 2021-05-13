@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import layers, Model
 import math
+from tensorflow.keras.applications import EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3, EfficientNetB4
 
 from utils import add_regularization
 
@@ -47,10 +48,20 @@ def round_filters(filters, width_coefficient, divisor=8):
         new_filters += divisor
     return int(new_filters)
 
-def EfficientNetLite(cfg):
+def EfficientNet(cfg):
     regularizer = l2(1e-5)
 
-    backbone = tf.keras.models.load_model(f'nets/EFLiteModels/L{cfg.MODEL.SIZE}.h5')
+    if cfg.MODEL.SIZE == 0:
+        backbone = EfficientNetB0(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
+    elif cfg.MODEL.SIZE == 1:
+        backbone = EfficientNetB1(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
+    elif cfg.MODEL.SIZE == 2:
+        backbone = EfficientNetB2(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
+    elif cfg.MODEL.SIZE == 3:
+        backbone = EfficientNetB3(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
+    elif cfg.MODEL.SIZE == 4:
+        backbone = EfficientNetB4(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
+        
     backbone = add_regularization(backbone, regularizer)
 
     d, w, _ = scaling_parameters(cfg.DATASET.INPUT_SHAPE)
@@ -63,7 +74,7 @@ def EfficientNetLite(cfg):
     keypoints = cfg.DATASET.OUTPUT_SHAPE[-1]
     regularizer = l2(cfg.TRAIN.WD)
 
-    x = backbone.layers[-4].output
+    x = backbone.layers[-1].output
     for i in range(cfg.MODEL.HEAD_BLOCKS):
         x = layers.Conv2DTranspose(
             round_filters(head_filters, width_coefficient, depth_divisor),

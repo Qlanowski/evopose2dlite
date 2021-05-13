@@ -15,6 +15,7 @@ from nets.simple_basline import SimpleBaseline
 from nets.hrnet import HRNet
 from nets.evopose2d import EvoPose
 from nets.efficient_net_lite import EfficientNetLite
+from nets.efficient_net import EfficientNet
 from time import time
 import argparse
 from validate import validate
@@ -117,6 +118,8 @@ def train(strategy, cfg):
             model = EvoPose(cfg)
         elif cfg.MODEL.TYPE == 'eflite':
             model = EfficientNetLite(cfg)
+        elif cfg.MODEL.TYPE == 'ef':
+            model = EfficientNet(cfg)
 
         model.compile(optimizer=optimizer, loss=mse)
 
