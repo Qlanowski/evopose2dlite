@@ -6,6 +6,7 @@ from tensorflow.keras import layers, Model
 from tensorflow.keras.applications import EfficientNetB0, EfficientNetB4, EfficientNetB5
 from tensorflow.keras.models import load_model
 from tensorflow.keras.regularizers import l2
+import tensorflow as tf
 import numpy as np
 from utils import partial_weight_transfer
 
@@ -144,10 +145,17 @@ def EvoPose(cfg):
     depth_divisor = cfg.MODEL.DEPTH_DIVISOR
     head_filters = cfg.MODEL.HEAD_CHANNELS
     head_kernel = cfg.MODEL.HEAD_KERNEL
-    head_activation = cfg.MODEL.HEAD_ACTIVATION
+    if cfg.MODEL.LITE:
+        head_activation = tf.nn.relu6
+    else:
+        head_activation = cfg.MODEL.HEAD_ACTIVATION
+
     keypoints = cfg.DATASET.OUTPUT_SHAPE[-1]
     regularizer = l2(cfg.TRAIN.WD)
-    activation = cfg.MODEL.ACTIVATION
+    if cfg.MODEL.LITE:
+        activation = tf.nn.relu6
+    else:
+        activation = cfg.MODEL.ACTIVATION
 
     img_input = layers.Input(shape=cfg.DATASET.INPUT_SHAPE)
 
@@ -185,6 +193,7 @@ def EvoPose(cfg):
                 drop_connect_rate * b / blocks,
                 regularizer=regularizer,
                 name='block{}{}_'.format(i + 1, chr(j + 97)),
+                lite=cfg.MODEL.LITE,
                 **args)
             b += 1
 
@@ -234,7 +243,8 @@ def block(inputs,
           se_ratio=0.,
           id_skip=True,
           project=True,
-          regularizer=None):
+          regularizer=None, 
+          lite=False):
 
     filters_in = inputs.shape[-1]
 
@@ -266,7 +276,7 @@ def block(inputs,
     x = layers.Activation(activation, name=name + 'activation')(x)
 
     # Squeeze and Excitation phase
-    if 0 < se_ratio <= 1:
+    if 0 < se_ratio <= 1 and lite == False:
         filters_se = max(1, int(filters_in * se_ratio))
         se = layers.GlobalAveragePooling2D(name=name + 'se_squeeze')(x)
         se = layers.Reshape((1, 1, filters), name=name + 'se_reshape')(se)
