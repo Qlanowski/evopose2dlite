@@ -1,0 +1,41 @@
+MODEL:
+  TYPE: 'evopose'
+  GENOTYPE: [
+    [ 3, 1, 2, 1 ],
+    [ 3, 3, 3, 2 ],
+    [ 5, 2, 5, 2 ],
+    [ 3, 4, 10, 2 ],
+    [ 5, 2, 14, 1 ],
+    [ 5, 4, 16, 2 ],
+    [ 3, 2, 10, 1 ]
+  ]
+  LOAD_WEIGHTS: false
+  FINAL_KERNEL: 1
+  LITE: true
+  DROPOUT: false
+  QUANTIZATION: true
+
+
+TRAIN:
+  BATCH_SIZE: 512
+  EPOCHS: 10
+  WARMUP_EPOCHS: 5
+  LR_SCHEDULE: 'warmup_cosine_decay'
+  SAVE_META: true
+
+VAL:
+  BATCH_SIZE: 256
+  DROP_REMAINDER: true
+  DET: false
+
+DATASET:
+  INPUT_SHAPE: [256, 192, 3]
+  OUTPUT_SHAPE: [-1, -1, 23]
+  TFRECORDS: 'gs://rangle/tfrecords_foot'
+  ANNOT: './data/annotations'
+  CACHE: true
+  BFLOAT16: false
+
+  
+
+
