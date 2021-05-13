@@ -70,6 +70,7 @@ cn.MODEL.HEAD_ACTIVATION = 'swish'
 cn.MODEL.FINAL_KERNEL = 3
 cn.MODEL.SAVE_DIR = 'models'
 cn.MODEL.LITE = False
+cn.MODEL.DROPOUT = True
 cn.MODEL.QUANTIZATION = False
 
 cn.EVAL = CN(new_allowed=True)

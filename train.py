@@ -184,6 +184,13 @@ if __name__ == '__main__':
     model = train(strategy, cfg)
     shutil.copy2('configs/' + args.cfg, os.path.join(wandb.run.dir, "model_config.yaml"))
 
+    model = tf.keras.models.load_model(
+        os.path.join(wandb.run.dir, "model-best.h5"), 
+        custom_objects={
+            'relu6': tf.nn.relu6,
+            'WarmupCosineDecay': WarmupCosineDecay
+        })
+
     if args.val == 1:
         if cfg.DATASET.OUTPUT_SHAPE[-1] == 23:
             mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=False)
