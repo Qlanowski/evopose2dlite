@@ -69,6 +69,8 @@ cn.MODEL.HEAD_CHANNELS = 128
 cn.MODEL.HEAD_ACTIVATION = 'swish'
 cn.MODEL.FINAL_KERNEL = 3
 cn.MODEL.SAVE_DIR = 'models'
+cn.MODEL.LITE = False
+cn.MODEL.QUANTIZATION = False
 
 cn.EVAL = CN(new_allowed=True)
 cn.EVAL.NAMES = [

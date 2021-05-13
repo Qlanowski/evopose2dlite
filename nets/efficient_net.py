@@ -49,7 +49,7 @@ def round_filters(filters, width_coefficient, divisor=8):
     return int(new_filters)
 
 def EfficientNet(cfg):
-    regularizer = l2(1e-5)
+    regularizer = l2(cfg.TRAIN.WD)
 
     if cfg.MODEL.SIZE == 0:
         backbone = EfficientNetB0(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
@@ -61,7 +61,7 @@ def EfficientNet(cfg):
         backbone = EfficientNetB3(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
     elif cfg.MODEL.SIZE == 4:
         backbone = EfficientNetB4(include_top=False, input_shape=tuple(cfg.DATASET.INPUT_SHAPE))
-        
+
     backbone = add_regularization(backbone, regularizer)
 
     d, w, _ = scaling_parameters(cfg.DATASET.INPUT_SHAPE)

@@ -48,7 +48,7 @@ def round_filters(filters, width_coefficient, divisor=8):
     return int(new_filters)
 
 def EfficientNetLite(cfg):
-    regularizer = l2(1e-5)
+    regularizer = l2(cfg.TRAIN.WD)
 
     backbone = tf.keras.models.load_model(f'nets/EFLiteModels/L{cfg.MODEL.SIZE}.h5')
     backbone = add_regularization(backbone, regularizer)
