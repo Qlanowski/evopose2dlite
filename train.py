@@ -70,7 +70,8 @@ def setup_wandb(cfg, model):
             "train_samples": cfg.DATASET.TRAIN_SAMPLES,
             "val_samples": cfg.DATASET.VAL_SAMPLES,
             "transfer": cfg.MODEL.LOAD_WEIGHTS,
-            "bfloat16": cfg.DATASET.BFLOAT16
+            "bfloat16": cfg.DATASET.BFLOAT16,
+            "half body prob": cfg.DATASET.HALF_BODY_PROB
         })
     return wandb.config
 

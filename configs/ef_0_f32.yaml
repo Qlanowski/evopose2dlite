@@ -21,5 +21,6 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
+  HALF_BODY_PROB: 0.5
   
 
