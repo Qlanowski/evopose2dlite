@@ -39,7 +39,7 @@ def get_preds(hms, Ms, input_shape, output_shape):
         preds[j, :, :2] = np.matmul(M_inv[:, :2], preds[j, :, :2].T).T + M_inv[:, 2].T
     return preds
 
-def get_preds(hms, input_shape, output_shape):
+def get_preds_without_transform(hms, input_shape, output_shape):
     preds = np.zeros((hms.shape[0], output_shape[-1], 3))
     for i in range(preds.shape[0]):
         for j in range(preds.shape[1]):
