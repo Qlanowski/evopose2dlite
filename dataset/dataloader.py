@@ -142,6 +142,12 @@ def preprocess(id, img, bbox, kp, score, DATASET, split='train', predict_kp=Fals
 
 
 def half_body_transform(joints, center, scale, DATASET):
+    force_lower = False
+    if len(joints) == 23:
+        foot_num = tf.reduce_sum(tf.cast(joints[17:,2] > 0, tf.float32))
+        if foot_num > 2:
+            force_lower = True
+        
     vis_mask = joints[:,2] > 0
     upper_body_mask = np.zeros(DATASET.OUTPUT_SHAPE[-1])
     upper_body_mask[DATASET.KP_UPPER] = 1
@@ -151,10 +157,13 @@ def half_body_transform(joints, center, scale, DATASET):
     upper_body_mask = tf.math.logical_and(upper_body_mask, vis_mask)
     upper = tf.boolean_mask(joints, upper_body_mask)
     lower = tf.boolean_mask(joints, lower_body_mask)
-    if tf.random.uniform([]) < 0.5 and tf.shape(upper)[0] > 2:
-        selected_joints = upper
+    if force_lower:
+         selected_joints = lower
     else:
-        selected_joints = lower if tf.shape(upper)[0] > 2 else upper
+        if tf.random.uniform([]) < 0.5 and tf.shape(upper)[0] > 2:
+            selected_joints = upper
+        else:
+            selected_joints = lower if tf.shape(upper)[0] > 2 else upper
 
     if tf.shape(selected_joints)[0] < 2:
         return center, scale
@@ -221,6 +230,24 @@ def load_tfds(cfg, split, det=False, predict_kp=False, drop_remainder=True, visu
                     num_parallel_calls=AUTO)
     return ds
 
+def load_representative_tfds(cfg):
+    record_subdir = osp.join(cfg.DATASET.TFRECORDS, 'train')
+    file_pattern = osp.join(record_subdir, '*.tfrecord').replace("\\","/")
+    AUTO = tf.data.experimental.AUTOTUNE
+    ds = tf.data.Dataset.list_files(file_pattern, shuffle=True)
+    ds = ds.interleave(tf.data.TFRecordDataset,
+                       cycle_length=10,
+                       block_length=1,
+                       num_parallel_calls=AUTO)
+    ds = ds.map(lambda record: parse_record(record, cfg.DATASET.OUTPUT_SHAPE[-1]), num_parallel_calls=AUTO)
+    ds = ds.map(lambda id, img, bbox, kp, score:
+                preprocess(id, img, bbox, kp, score, cfg.DATASET),
+                num_parallel_calls=AUTO)
+
+    ds = ds.map(lambda img, kp: img)
+    # ds = ds.batch(1).take(100)
+    return ds
+
 
 def visualize(img, joints, valid):
     for i, v in enumerate(valid):
@@ -253,6 +280,49 @@ def prediction_examples(model, cfg):
         img_org = tf.image.decode_jpeg(img_bytes, channels=3)
         img = image_resize(img_org, cfg.DATASET)
         hms = model.predict(tf.expand_dims(img, 0))
+        hms = tf.squeeze(hms)
+        preds = pl.get_preds(hms, img_org.shape)
+
+        img_cv = cv2.imread(os.path.join(cfg.DATASET.RUN_EXAMPLES, img_path))
+        overlay = img_cv.copy()
+
+        for i, (x, y, v) in enumerate(preds):
+            overlay = cv2.circle(overlay, (int(np.round(x)), int(np.round(y))), 2, [255, 255, 255], 2)
+
+        KP_PAIRS = [[5, 6], [6, 12], [12, 11], [11, 5],
+            [5, 7], [7, 9], [11, 13], [13, 15],
+            [6, 8], [8, 10], [12, 14], [14, 16], 
+            [15, 17],[15, 19],[17, 18],
+            [16, 20],[16, 21],[20, 21]]
+
+        for p in KP_PAIRS:
+            if len(preds) > p[0] and len(preds) > p[1]:
+                overlay = cv2.line(overlay,
+                                tuple(np.int32(np.round(preds[p[0], :2]))),
+                                tuple(np.int32(np.round(preds[p[1], :2]))), [255, 255, 255], 2)
+
+        img = cv2.addWeighted(overlay, 0.8, img_cv, 1 - 0.8, 0)
+        im_pil = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        im_pil = Image.fromarray(im_pil)
+        imgs.append(im_pil)
+    return imgs
+
+def prediction_tf_lite(path, cfg):
+    interpreter = tf.lite.Interpreter(path)
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    imgs = []
+    for img_path in os.listdir(cfg.DATASET.RUN_EXAMPLES):
+        img_bytes = open(osp.join(cfg.DATASET.RUN_EXAMPLES, img_path), 'rb').read()
+        img_org = tf.image.decode_jpeg(img_bytes, channels=3)
+        img = image_resize(img_org, cfg.DATASET)
+        input_data = np.array([img.numpy()], dtype=np.float32)
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
+        hms = interpreter.get_tensor(output_details[0]['index'])
+
         hms = tf.squeeze(hms)
         preds = pl.get_preds(hms, img_org.shape)
 

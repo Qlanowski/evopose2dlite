@@ -39,6 +39,27 @@ def get_preds(hms, Ms, input_shape, output_shape):
         preds[j, :, :2] = np.matmul(M_inv[:, :2], preds[j, :, :2].T).T + M_inv[:, 2].T
     return preds
 
+def get_preds(hms, input_shape, output_shape):
+    preds = np.zeros((hms.shape[0], output_shape[-1], 3))
+    for i in range(preds.shape[0]):
+        for j in range(preds.shape[1]):
+            hm = hms[i, :, :, j]
+            idx = hm.argmax()
+            y, x = np.unravel_index(idx, hm.shape)
+            px = int(math.floor(x + 0.5))
+            py = int(math.floor(y + 0.5))
+            if 1 < px < output_shape[1] - 1 and 1 < py < output_shape[0] - 1:
+                diff = np.array([hm[py][px + 1] - hm[py][px - 1],
+                                 hm[py + 1][px] - hm[py - 1][px]])
+                diff = np.sign(diff)
+                x += diff[0] * 0.25
+                y += diff[1] * 0.25
+            preds[i, j, :2] = [x * input_shape[1] / output_shape[1],
+                              y * input_shape[0] / output_shape[0]]
+            preds[i, j, -1] = hm.max() / 255
+
+    return preds
+
 
 def validate(strategy, cfg, model=None, split='val', clear_foot=False):
     cfg.DATASET.CACHE = False
