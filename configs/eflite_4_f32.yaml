@@ -4,13 +4,13 @@ MODEL:
   FINAL_KERNEL: 1
 
 TRAIN:
-  BATCH_SIZE: 64
+  BATCH_SIZE: 256
   EPOCHS: 10
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
 
 VAL:
-  BATCH_SIZE: 64
+  BATCH_SIZE: 256
   DROP_REMAINDER: true
   DET: false
 
@@ -21,3 +21,4 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
+  HALF_BODY_PROB: 0.5

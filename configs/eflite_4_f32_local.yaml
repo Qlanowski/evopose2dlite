@@ -21,6 +21,7 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
+  HALF_BODY_PROB: 0.5
   TRAIN_SAMPLES: 50
   VAL_SAMPLES: 50
   
