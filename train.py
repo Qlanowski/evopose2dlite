@@ -55,6 +55,8 @@ def setup_wandb(cfg, model):
     wandb.init(
         project="rangle",
         group = group,
+        id = cfg.TRAIN.WANDB_RUN_ID if cfg.TRAIN.WANDB_RUN_ID else None,
+        resume = True if cfg.TRAIN.WANDB_RUN_ID else False,
         config = {
             "model": cfg.MODEL.NAME,
             "flops": flops,
@@ -112,7 +114,13 @@ def train(strategy, cfg):
 
     with strategy.scope():
         optimizer = tf.keras.optimizers.Adam(lr_schedule)
-        if cfg.MODEL.TYPE == 'simple_baseline':
+        if cfg.TRAIN.WANDB_RUN_ID:
+            model = tf.keras.models.load_model(f'models/{cfg.MODEL.NAME}.h5', 
+                custom_objects={
+                            'relu6': tf.nn.relu6,
+                            'WarmupCosineDecay': WarmupCosineDecay
+                })
+        elif cfg.MODEL.TYPE == 'simple_baseline':
             model = SimpleBaseline(cfg)
         elif cfg.MODEL.TYPE == 'hrnet':
             model = HRNet(cfg)
@@ -149,8 +157,11 @@ def train(strategy, cfg):
     #     mode='min',
     #     save_best_only=True)
 
+    initial_epoch = 0
+    if cfg.TRAIN.WANDB_RUN_ID:
+        initial_epoch = cfg.TRAIN.INITIAL_EPOCH
 
-    model.fit(train_ds, epochs=cfg.TRAIN.EPOCHS, verbose=1,
+    model.fit(train_ds, initial_epoch=initial_epoch, epochs=cfg.TRAIN.EPOCHS, verbose=1,
                         validation_data=val_ds, 
                         validation_steps=spv, 
                         steps_per_epoch=spe,
@@ -183,8 +194,8 @@ if __name__ == '__main__':
 
     cfg.TRAIN.TEST = args.test
 
-    model = train(strategy, cfg)
     shutil.copy2('configs/' + args.cfg, os.path.join(wandb.run.dir, "model_config.yaml"))
+    model = train(strategy, cfg)
 
     model = tf.keras.models.load_model(
         os.path.join(wandb.run.dir, "model-best.h5"), 

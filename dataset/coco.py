@@ -45,6 +45,7 @@ cn.TRAIN.SAVE_EPOCHS = 0
 cn.TRAIN.SAVE_META = False
 cn.TRAIN.VAL = True
 cn.TRAIN.TEST = False
+cn.TRAIN.WANDB_RUN_ID = None
 
 cn.VAL = CN(new_allowed=True)
 cn.VAL.BATCH_SIZE = 64

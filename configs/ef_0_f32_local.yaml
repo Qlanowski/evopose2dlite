@@ -5,9 +5,12 @@ MODEL:
 
 TRAIN:
   BATCH_SIZE: 1
-  EPOCHS: 2
+  EPOCHS: 10
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
+  WANDB_RUN_ID: 'trim-firefly-98'
+  INITIAL_EPOCH: 3
+
 
 VAL:
   BATCH_SIZE: 1
@@ -17,7 +20,7 @@ VAL:
 DATASET:
   INPUT_SHAPE: [256, 192, 3]
   OUTPUT_SHAPE: [-1, -1, 23]
-  TFRECORDS: 'gs://rangle/tfrecords_foot_small'
+  TFRECORDS: './data/tfrecords_foot_small'
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: false
