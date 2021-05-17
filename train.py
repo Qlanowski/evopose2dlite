@@ -76,6 +76,8 @@ def setup_wandb(cfg, model):
             "bfloat16": cfg.DATASET.BFLOAT16,
             "half body prob": cfg.DATASET.HALF_BODY_PROB
         })
+    shutil.copy2('configs/' + args.cfg, os.path.join(wandb.run.dir, "model_config.yaml"))
+
     return wandb.config
 
 def train(strategy, cfg):
@@ -115,7 +117,8 @@ def train(strategy, cfg):
     with strategy.scope():
         optimizer = tf.keras.optimizers.Adam(lr_schedule)
         if cfg.TRAIN.WANDB_RUN_ID:
-            model = tf.keras.models.load_model(f'models/{cfg.MODEL.NAME}.h5', 
+            file = wandb.restore('model-best.h5', run_path=f"{cfg.EVAL.WANDB_RUNS}/{cfg.TRAIN.WANDB_RUN_ID}")
+            model = tf.keras.models.load_model(file.name, 
                 custom_objects={
                             'relu6': tf.nn.relu6,
                             'WarmupCosineDecay': WarmupCosineDecay
@@ -194,7 +197,6 @@ if __name__ == '__main__':
 
     cfg.TRAIN.TEST = args.test
 
-    shutil.copy2('configs/' + args.cfg, os.path.join(wandb.run.dir, "model_config.yaml"))
     model = train(strategy, cfg)
 
     model = tf.keras.models.load_model(

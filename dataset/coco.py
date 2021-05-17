@@ -75,6 +75,7 @@ cn.MODEL.DROPOUT = True
 cn.MODEL.QUANTIZATION = False
 
 cn.EVAL = CN(new_allowed=True)
+cn.EVAL.WANDB_RUNS = 'qlanowski/rangle/runs'
 cn.EVAL.NAMES = [
     "Nose", 
     "Left eye", 

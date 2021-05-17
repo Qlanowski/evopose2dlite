@@ -5,11 +5,11 @@ MODEL:
 
 TRAIN:
   BATCH_SIZE: 1
-  EPOCHS: 10
+  EPOCHS: 15
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
-  WANDB_RUN_ID: 'trim-firefly-98'
-  INITIAL_EPOCH: 3
+  WANDB_RUN_ID: 'u3k8gt8q'
+  INITIAL_EPOCH: 6
 
 
 VAL:
