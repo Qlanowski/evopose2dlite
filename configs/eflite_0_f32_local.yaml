@@ -5,11 +5,11 @@ MODEL:
 
 TRAIN:
   BATCH_SIZE: 512
-  EPOCHS: 10
+  EPOCHS: 20
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
-  # WANDB_RUN_ID: '32c71734'
-  # INITIAL_EPOCH: 9
+  WANDB_RUN_ID: '32c71734'
+  INITIAL_EPOCH: 9
 
 VAL:
   BATCH_SIZE: 256
@@ -23,3 +23,5 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: true
+  TRAIN_SAMPLES: 50
+  VAL_SAMPLES: 50
