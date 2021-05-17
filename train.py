@@ -155,7 +155,11 @@ def train(strategy, cfg):
           .format(cfg.MODEL.NAME, wandb_config.parameters,
                   wandb_config.flops, cfg.TRAIN.ACCELERATOR, cfg.TRAIN.EPOCHS))
 
-    model.fit(train_ds, epochs=cfg.TRAIN.EPOCHS, verbose=1,
+    initial_epoch = 0
+    if cfg.TRAIN.WANDB_RUN_ID:
+        initial_epoch = cfg.TRAIN.INITIAL_EPOCH
+
+    model.fit(train_ds, initial_epoch=initial_epoch, epochs=cfg.TRAIN.EPOCHS, verbose=1,
                         validation_data=val_ds, 
                         validation_steps=spv, 
                         steps_per_epoch=spe,
