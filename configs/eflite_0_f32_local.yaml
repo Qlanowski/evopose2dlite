@@ -4,7 +4,7 @@ MODEL:
   FINAL_KERNEL: 1
 
 TRAIN:
-  BATCH_SIZE: 512
+  BATCH_SIZE: 3
   EPOCHS: 20
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
@@ -12,14 +12,14 @@ TRAIN:
   INITIAL_EPOCH: 9
 
 VAL:
-  BATCH_SIZE: 256
+  BATCH_SIZE: 3
   DROP_REMAINDER: true
   DET: false
 
 DATASET:
   INPUT_SHAPE: [224, 224, 3]
   OUTPUT_SHAPE: [-1, -1, 23]
-  TFRECORDS: 'gs://rangle/tfrecords_foot'
+  TFRECORDS: 'gs://rangle/tfrecords_foot_small'
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: true

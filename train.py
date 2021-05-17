@@ -123,6 +123,7 @@ def train(strategy, cfg):
                             'relu6': tf.nn.relu6,
                             'WarmupCosineDecay': WarmupCosineDecay
                 })
+            model.compile(optimizer=model.optimizer, loss=mse)
         else:
             if cfg.MODEL.TYPE == 'simple_baseline':
                 model = SimpleBaseline(cfg)
