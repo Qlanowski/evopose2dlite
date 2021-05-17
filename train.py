@@ -123,18 +123,19 @@ def train(strategy, cfg):
                             'relu6': tf.nn.relu6,
                             'WarmupCosineDecay': WarmupCosineDecay
                 })
-        elif cfg.MODEL.TYPE == 'simple_baseline':
-            model = SimpleBaseline(cfg)
-        elif cfg.MODEL.TYPE == 'hrnet':
-            model = HRNet(cfg)
-        elif cfg.MODEL.TYPE == 'evopose':
-            model = EvoPose(cfg)
-        elif cfg.MODEL.TYPE == 'eflite':
-            model = EfficientNetLite(cfg)
-        elif cfg.MODEL.TYPE == 'ef':
-            model = EfficientNet(cfg)
+        else:
+            if cfg.MODEL.TYPE == 'simple_baseline':
+                model = SimpleBaseline(cfg)
+            elif cfg.MODEL.TYPE == 'hrnet':
+                model = HRNet(cfg)
+            elif cfg.MODEL.TYPE == 'evopose':
+                model = EvoPose(cfg)
+            elif cfg.MODEL.TYPE == 'eflite':
+                model = EfficientNetLite(cfg)
+            elif cfg.MODEL.TYPE == 'ef':
+                model = EfficientNet(cfg)
 
-        model.compile(optimizer=optimizer, loss=mse)
+            model.compile(optimizer=optimizer, loss=mse)
 
     cfg.DATASET.OUTPUT_SHAPE = model.output_shape[1:]
     cfg.DATASET.SIGMA = 2 * cfg.DATASET.OUTPUT_SHAPE[0] / 64
