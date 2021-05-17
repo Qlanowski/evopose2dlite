@@ -5,11 +5,11 @@ MODEL:
 
 TRAIN:
   BATCH_SIZE: 1
-  EPOCHS: 15
+  EPOCHS: 20
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
-  WANDB_RUN_ID: 'u3k8gt8q'
-  INITIAL_EPOCH: 6
+  WANDB_RUN_ID: '1ss87sbp'
+  INITIAL_EPOCH: 15
 
 
 VAL:
