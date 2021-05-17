@@ -62,6 +62,7 @@ def setup_wandb(cfg, model):
             "flops": flops,
             "parameters": parameters,
             "lr_schedule": cfg.TRAIN.LR_SCHEDULE,
+            "base_lr": cfg.TRAIN.BASE_LR,
             "batch_size": cfg.TRAIN.BATCH_SIZE,
             "epoch": cfg.TRAIN.EPOCHS,
             "input_shape": '_'.join(str(x) for x in cfg.DATASET.INPUT_SHAPE),
@@ -75,7 +76,7 @@ def setup_wandb(cfg, model):
             "bfloat16": cfg.DATASET.BFLOAT16,
             "half body prob": cfg.DATASET.HALF_BODY_PROB
         })
-    shutil.copy2('configs/' + args.cfg, os.path.join(wandb.run.dir, "model_config.yaml"))
+    shutil.copy2(f'configs/{cfg.MODEL.NAME}.yaml', os.path.join(wandb.run.dir, "model_config.yaml"))
 
     return wandb.config
 
@@ -116,8 +117,10 @@ def train(strategy, cfg):
     with strategy.scope():
         optimizer = tf.keras.optimizers.Adam(lr_schedule)
         if cfg.TRAIN.WANDB_RUN_ID:
-            file = wandb.restore('model-best.h5', run_path=f"{cfg.EVAL.WANDB_RUNS}/{cfg.TRAIN.WANDB_RUN_ID}")
-            model = tf.keras.models.load_model(file.name, 
+            api = wandb.Api()
+            run = api.run(f"{cfg.EVAL.WANDB_RUNS}/{cfg.TRAIN.WANDB_RUN_ID}")
+            # run.file("model-best.h5").download(replace=True)
+            model = tf.keras.models.load_model('model-best.h5', 
                 custom_objects={
                             'relu6': tf.nn.relu6,
                             'WarmupCosineDecay': WarmupCosineDecay
@@ -153,25 +156,11 @@ def train(strategy, cfg):
           .format(cfg.MODEL.NAME, wandb_config.parameters,
                   wandb_config.flops, cfg.TRAIN.ACCELERATOR, cfg.TRAIN.EPOCHS))
 
-
-    # model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    #     filepath=f'{cfg.MODEL.SAVE_DIR}/model_ckp.h5',
-    #     save_weights_only=False,
-    #     monitor='val_loss',
-    #     mode='min',
-    #     save_best_only=True)
-
-    initial_epoch = 0
-    if cfg.TRAIN.WANDB_RUN_ID:
-        initial_epoch = cfg.TRAIN.INITIAL_EPOCH
-
-    model.fit(train_ds, initial_epoch=initial_epoch, epochs=cfg.TRAIN.EPOCHS, verbose=1,
+    model.fit(train_ds, epochs=cfg.TRAIN.EPOCHS, verbose=1,
                         validation_data=val_ds, 
                         validation_steps=spv, 
                         steps_per_epoch=spe,
                         callbacks=[WandbCallback()])
-    # os.rename(f'{cfg.MODEL.SAVE_DIR}/model_ckp.h5', os.path.join(wandb.run.dir, "model_ckp.h5"))
-    # wandb.save(f'./models/{cfg.MODEL.SAVE_DIR}/model_ckp.h5')
     
     return model
 
