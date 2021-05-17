@@ -62,7 +62,6 @@ def setup_wandb(cfg, model):
             "flops": flops,
             "parameters": parameters,
             "lr_schedule": cfg.TRAIN.LR_SCHEDULE,
-            "base_lr": cfg.TRAIN.BASE_LR,
             "batch_size": cfg.TRAIN.BATCH_SIZE,
             "epoch": cfg.TRAIN.EPOCHS,
             "input_shape": '_'.join(str(x) for x in cfg.DATASET.INPUT_SHAPE),
