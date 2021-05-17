@@ -8,9 +8,9 @@ TRAIN:
   EPOCHS: 200
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
-  #WANDB_RUN_ID: 'driven-fire-96'
-  #INITIAL_EPOCH: 102
-  
+  WANDB_RUN_ID: '2hqon4bq'
+  INITIAL_EPOCH: 13
+
 VAL:
   BATCH_SIZE: 256
   DROP_REMAINDER: true
