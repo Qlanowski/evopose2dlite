@@ -78,9 +78,14 @@ def get_preds(hms, input_shape):
     for j in range(preds.shape[1]):
         hm = hms[:, :, j]
         idx = tf.math.argmax(hm)
+        print("idx")
+        print(idx)
         print("hm.shape")
         print(hm.shape)
         y, x = np.unravel_index(idx, hm.shape)
+        print("unravel_index")
+        print(y)
+        print(x)
         px = int(math.floor(x + 0.5))
         py = int(math.floor(y + 0.5))
         if 1 < px < output_shape[1] - 1 and 1 < py < output_shape[0] - 1:
