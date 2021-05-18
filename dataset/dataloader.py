@@ -281,7 +281,7 @@ def prediction_examples(model, cfg):
         img = image_resize(img_org, cfg.DATASET)
         hms = model.predict(tf.expand_dims(img, 0))
         hms = tf.squeeze(hms)
-        preds = pl.get_preds(hms.numpy(), img_org.shape)
+        preds = pl.get_preds(hms, img_org.shape)
 
         img_cv = cv2.imread(os.path.join(cfg.DATASET.RUN_EXAMPLES, img_path))
         overlay = img_cv.copy()
