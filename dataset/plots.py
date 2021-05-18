@@ -72,31 +72,24 @@ def plot_image(img, pred_hm, valid):
     fig.subplots_adjust(wspace=0.1, hspace=0.1)
     plt.show()
 
-def get_preds(hms, img_shape):
-    hms = hms.numpy()
-    preds = np.zeros((hms.shape[-1], 3))
-    sh = img_shape[0] / hms.shape[0]
-    sw = img_shape[1] / hms.shape[1]
-
-    for j in range(hms.shape[-1]):
+def get_preds(hms, input_shape):
+    output_shape = hms.shape
+    preds = np.zeros((output_shape[-1], 3))
+    for j in range(preds.shape[1]):
         hm = hms[:, :, j]
         idx = hm.argmax()
-        max_y, max_x = np.unravel_index(idx, hm.shape)
-        hms[max_y, max_x, j] = float('-inf')
+        y, x = np.unravel_index(idx, hm.shape)
+        px = int(math.floor(x + 0.5))
+        py = int(math.floor(y + 0.5))
+        if 1 < px < output_shape[1] - 1 and 1 < py < output_shape[0] - 1:
+            diff = np.array([hm[py][px + 1] - hm[py][px - 1],
+                                hm[py + 1][px] - hm[py - 1][px]])
+            diff = np.sign(diff)
+            x += diff[0] * 0.25
+            y += diff[1] * 0.25
+        preds[j, :2] = [x * input_shape[1] / output_shape[1],
+                            y * input_shape[0] / output_shape[0]]
+        preds[j, -1] = hm.max() / 255
 
-        idx = hm.argmax()
-        sec_y, sec_x = np.unravel_index(idx, hm.shape)
-
-        diff = math.sqrt(((max_y-sec_y)**2)+((max_x-sec_x)**2))
-
-        dy = (sec_y - max_y)/diff
-        dx = (sec_x - max_x)/diff
-
-        x = max_x + 0.25 * dx
-        y = max_y + 0.25 * dy
-        preds[j, 0] = x * sw
-        preds[j, 1] = y * sh
-        preds[j, 2] = hm.max() / 255
-        
     return preds
     

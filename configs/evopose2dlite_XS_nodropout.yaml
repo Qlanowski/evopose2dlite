@@ -18,7 +18,7 @@ MODEL:
 
 TRAIN:
   BATCH_SIZE: 512
-  EPOCHS: 200
+  EPOCHS: 5
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
@@ -35,6 +35,7 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: true
+  HALF_BODY_PROB: 0.5
 
   
 
