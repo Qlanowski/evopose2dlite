@@ -1,0 +1,26 @@
+MODEL:
+  TYPE: 'ef'
+  SIZE: 0
+  FINAL_KERNEL: 1
+
+TRAIN:
+  BATCH_SIZE: 512
+  EPOCHS: 10
+  WARMUP_EPOCHS: 5
+  LR_SCHEDULE: 'warmup_cosine_decay'
+
+VAL:
+  BATCH_SIZE: 256
+  DROP_REMAINDER: true
+  DET: false
+
+DATASET:
+  INPUT_SHAPE: [256, 192, 3]
+  OUTPUT_SHAPE: [-1, -1, 23]
+  TFRECORDS: 'gs://rangle/tfrecords_foot'
+  ANNOT: './data/annotations'
+  CACHE: true
+  BFLOAT16: true
+  # HALF_BODY_PROB: 0.5
+  
+
