@@ -77,7 +77,7 @@ def get_preds(hms, input_shape):
     preds = np.zeros((output_shape[-1], 3))
     for j in range(preds.shape[1]):
         hm = hms[:, :, j]
-        idx = tf.math.argmax(hm)
+        idx = np.argmax(hm)
         print("idx")
         print(idx)
         print("hm.shape")
