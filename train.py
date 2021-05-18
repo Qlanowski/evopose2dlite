@@ -190,46 +190,39 @@ if __name__ == '__main__':
 
     cfg.TRAIN.TEST = args.test
 
-    # model = train(strategy, cfg)
+    model = train(strategy, cfg)
 
-    # model = tf.keras.models.load_model(
-    #     os.path.join(wandb.run.dir, "model-best.h5"), 
-    #     custom_objects={
-    #         'relu6': tf.nn.relu6,
-    #         'WarmupCosineDecay': WarmupCosineDecay
-    #     })
-    path = '/content/evopose2dlite/wandb/run-20210518_095245-3flls34w/files/model-best.h5'
     model = tf.keras.models.load_model(
-       path, 
+        os.path.join(wandb.run.dir, "model-best.h5"), 
         custom_objects={
             'relu6': tf.nn.relu6,
             'WarmupCosineDecay': WarmupCosineDecay
         })
 
-    # if args.val == 1:
-    #     if cfg.DATASET.OUTPUT_SHAPE[-1] == 23:
-    #         mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=False)
-    #         print('AP body+foot: {:.5f}'.format(mAP))
-    #         wandb.log({
-    #             'mAP_body+foot': mAP,
-    #             'AP_50_body+foot': AP_50,
-    #             'AP_75_body+foot': AP_75,
-    #             'AP_small_body+foot': AP_small,
-    #             'AP_medium_body+foot': AP_medium,
-    #             'AP_large_body+foot': AP_large
-    #         })
+    if args.val == 1:
+        if cfg.DATASET.OUTPUT_SHAPE[-1] == 23:
+            mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=False)
+            print('AP body+foot: {:.5f}'.format(mAP))
+            wandb.log({
+                'mAP_body+foot': mAP,
+                'AP_50_body+foot': AP_50,
+                'AP_75_body+foot': AP_75,
+                'AP_small_body+foot': AP_small,
+                'AP_medium_body+foot': AP_medium,
+                'AP_large_body+foot': AP_large
+            })
 
-    #     mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=True)
-    #     print('AP body: {:.5f}'.format(mAP))
-    #     wandb.log({
-    #         'mAP_body': mAP,
-    #         'AP_50_body': AP_50,
-    #         'AP_75_body': AP_75,
-    #         'AP_small_body': AP_small,
-    #         'AP_medium_body': AP_medium,
-    #         'AP_large_body': AP_large
-    #     })
+        mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=True)
+        print('AP body: {:.5f}'.format(mAP))
+        wandb.log({
+            'mAP_body': mAP,
+            'AP_50_body': AP_50,
+            'AP_75_body': AP_75,
+            'AP_small_body': AP_small,
+            'AP_medium_body': AP_medium,
+            'AP_large_body': AP_large
+        })
 
     imgs = prediction_examples(model, cfg)
-    # images = [wandb.Image(img) for img in imgs]
-    # wandb.log({"runners": images})  
+    images = [wandb.Image(img) for img in imgs]
+    wandb.log({"runners": images})
