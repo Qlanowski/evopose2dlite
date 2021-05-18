@@ -96,7 +96,7 @@ def get_preds(hms, input_shape):
             y += diff[1] * 0.25
         preds[j, :2] = [x * input_shape[1] / output_shape[1],
                             y * input_shape[0] / output_shape[0]]
-        preds[j, -1] = hm.max() / 255
+        preds[j, -1] = np.array(hm).max() / 255
 
     return preds
     
