@@ -18,6 +18,8 @@ TRAIN:
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
+  WANDB_RUN_ID: 'hvxt3j8a'
+  INITIAL_EPOCH: 15
 
 VAL:
   BATCH_SIZE: 128
@@ -30,5 +32,3 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: true
-
-
