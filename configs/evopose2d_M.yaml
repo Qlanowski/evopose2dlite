@@ -23,7 +23,40 @@ TRAIN:
 
 VAL:
   BATCH_SIZE: 128
+  DROP_REMAINDER: trueMODEL:
+  TYPE: 'evopose'
+  GENOTYPE: [
+    [ 3, 1, 2, 1 ],
+    [ 3, 3, 3, 2 ],
+    [ 5, 2, 5, 2 ],
+    [ 3, 4, 10, 2 ],
+    [ 5, 2, 14, 1 ],
+    [ 5, 4, 16, 1 ],
+    [ 3, 2, 10, 1 ]
+  ]
+  LOAD_WEIGHTS: false
+  FINAL_KERNEL: 1
+
+TRAIN:
+  BATCH_SIZE: 128
+  EPOCHS: 200
+  WARMUP_EPOCHS: 5
+  LR_SCHEDULE: 'warmup_cosine_decay'
+  SAVE_META: true
+  WANDB_RUN_ID: 'hvxt3j8a'
+  INITIAL_EPOCH: 15
+
+VAL:
+  BATCH_SIZE: 128
   DROP_REMAINDER: true
+  DET: false
+
+DATASET:
+  INPUT_SHAPE: [384, 288, 3]
+  TFRECORDS: 'gs://rangle/tfrecords_foot'
+  ANNOT: './data/annotations'
+  CACHE: true
+  BFLOAT16: true
   DET: false
 
 DATASET:

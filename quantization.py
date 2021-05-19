@@ -94,12 +94,23 @@ if __name__ == '__main__':
             image = tf.random.normal([1] + cfg.DATASET.INPUT_SHAPE)
             yield [image]
 
+    ds = iter(train_ds)
+    l = []
+    for i, img in enumerate(ds):
+        l.append(img)
 
-    # model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\evopose2dlite_M_f32_nodropout.h5", 
-    #         custom_objects={
-    #                     'relu6': tf.nn.relu6,
-    #                     'WarmupCosineDecay': WarmupCosineDecay
-    #         })
+    def representative_dataset2():
+        for img in l:
+            yield [img]
+    
+
+    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite_0_f32.h5", 
+            custom_objects={
+                        'relu6': tf.nn.relu6,
+                        'WarmupCosineDecay': WarmupCosineDecay
+            })
+
+    
 
     # images = prediction_examples(model, cfg)
     # for img in images:
@@ -109,15 +120,15 @@ if __name__ == '__main__':
     #     cv2.destroyAllWindows()
 
     
-    # converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    # converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    # converter.representative_dataset = representative_dataset_gen
-    # tflite_quant_model = converter.convert()
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.representative_dataset = representative_dataset2
+    tflite_quant_model = converter.convert()
 
-    TFLITE_FILE_PATH = 'models/modelM_int.tflite'
+    TFLITE_FILE_PATH = 'models/eflite0_int.tflite'
 
-    # with open(TFLITE_FILE_PATH, 'wb') as f:
-    #     f.write(tflite_quant_model)
+    with open(TFLITE_FILE_PATH, 'wb') as f:
+        f.write(tflite_quant_model)
 
     images = prediction_tf_lite(TFLITE_FILE_PATH, cfg)
     for img in images:

@@ -8,8 +8,8 @@ TRAIN:
   EPOCHS: 200
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
-  WANDB_RUN_ID: '3aom1nbp'
-  INITIAL_EPOCH: 145
+  WANDB_RUN_ID: '2hqon4bq'
+  INITIAL_EPOCH: 198
 
 VAL:
   BATCH_SIZE: 256
@@ -23,4 +23,4 @@ DATASET:
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: true
-  HALF_BODY_PROB: 0.5
+  #HALF_BODY_PROB: 0.5
