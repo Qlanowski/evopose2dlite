@@ -8,8 +8,8 @@ TRAIN:
   EPOCHS: 200
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
-  # WANDB_RUN_ID: '24ckgmb5'
-  # INITIAL_EPOCH: 8
+  WANDB_RUN_ID: '2aqxr0tj'
+  INITIAL_EPOCH: 95
 
 VAL:
   BATCH_SIZE: 256

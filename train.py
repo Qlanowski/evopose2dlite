@@ -116,9 +116,9 @@ def train(strategy, cfg):
     with strategy.scope():
         optimizer = tf.keras.optimizers.Adam(lr_schedule)
         if cfg.TRAIN.WANDB_RUN_ID:
-            api = wandb.Api()
-            run = api.run(f"{cfg.EVAL.WANDB_RUNS}/{cfg.TRAIN.WANDB_RUN_ID}")
-            run.file("model-best.h5").download(replace=True)
+            # api = wandb.Api()
+            # run = api.run(f"{cfg.EVAL.WANDB_RUNS}/{cfg.TRAIN.WANDB_RUN_ID}")
+            # run.file("model-best.h5").download(replace=True)
             model = tf.keras.models.load_model('model-best.h5', 
                 custom_objects={
                             'relu6': tf.nn.relu6,
