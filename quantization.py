@@ -10,60 +10,7 @@ from dataset.dataloader import load_representative_tfds, visualize, prediction_t
 from dataset.coco import cn as cfg
 import argparse
 from lr_schedules import WarmupCosineDecay
-import cv2
 import math
-
-class MyModule(tf.Module):
-  def __init__(self, model):
-    self.model = model
-
-  @tf.function(input_signature=[tf.TensorSpec(shape=(256, 192, 3), dtype=tf.float32)])
-  def score(self, image):
-    input_shape = [256, 192, 3]
-    output_shape = [64, 48, 23]
-    hms = self.model(image)
-    preds = np.zeros((hms.shape[0], output_shape[-1], 3))
-    for i in range(preds.shape[0]):
-        for j in range(preds.shape[1]):
-            hm = hms[i, :, :, j]
-            idx = hm.argmax()
-            y, x = np.unravel_index(idx, hm.shape)
-            px = int(math.floor(x + 0.5))
-            py = int(math.floor(y + 0.5))
-            if 1 < px < output_shape[1] - 1 and 1 < py < output_shape[0] - 1:
-                diff = np.array([hm[py][px + 1] - hm[py][px - 1],
-                                 hm[py + 1][px] - hm[py - 1][px]])
-                diff = np.sign(diff)
-                x += diff[0] * 0.25
-                y += diff[1] * 0.25
-            preds[i, j, :2] = [x * input_shape[1] / output_shape[1],
-                              y * input_shape[0] / output_shape[0]]
-            preds[i, j, -1] = hm.max() / 255
-
-
-    return preds
-
-def hm_to_kp(hms, input_shape, output_shape):
-    input_shape = [256, 192, 3]
-    output_shape = [64,48,23]
-    preds = np.zeros((output_shape[-1], 3))
-    for j in range(preds.shape[0]):
-        hm = hms[:, :, j]
-        idx = hm.argmax()
-        y, x = np.unravel_index(idx, hm.shape)
-        px = int(math.floor(x + 0.5))
-        py = int(math.floor(y + 0.5))
-        if 1 < px < output_shape[1] - 1 and 1 < py < output_shape[0] - 1:
-            diff = np.array([hm[py][px + 1] - hm[py][px - 1],
-                                hm[py + 1][px] - hm[py - 1][px]])
-            diff = np.sign(diff)
-            x += diff[0] * 0.25
-            y += diff[1] * 0.25
-        preds[j, :2] = [x * input_shape[1] / output_shape[1],
-                            y * input_shape[0] / output_shape[0]]
-        preds[j, -1] = hm.max() / 255
-
-    return preds
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -94,23 +41,54 @@ if __name__ == '__main__':
             image = tf.random.normal([1] + cfg.DATASET.INPUT_SHAPE)
             yield [image]
 
-    ds = iter(train_ds)
-    l = []
-    for i, img in enumerate(ds):
-        l.append(img)
 
     def representative_dataset2():
         for img in l:
             yield [img]
-    
 
-    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite_0_f32.h5", 
+    def get_preds(hms):
+        hms = tf.cast(hms, dtype=tf.float32)
+        output_shape = hms.shape[1:]
+        preds = np.zeros((output_shape[-1], 3))
+        for j in range(preds.shape[0]):
+            hm = hms[:, :, j]
+            f_hm = tf.nest.flatten(hm)
+            idx = tf.math.argmax(f_hm)
+            y, x = tf.unravel_index(idx, output_shape[0:2])
+            px = int(math.floor(x + 0.5))
+            py = int(math.floor(y + 0.5))
+            if 1 < px < output_shape[1] - 1 and 1 < py < output_shape[0] - 1:
+                diff = np.array([hm[py][px + 1] - hm[py][px - 1],
+                                    hm[py + 1][px] - hm[py - 1][px]])
+                diff = np.sign(diff)
+                x += diff[0] * 0.25
+                y += diff[1] * 0.25
+            preds[j, :2] = [x, y]
+            preds[j, -1] = np.array(hm).max() / 255
+
+        return preds
+    
+    @tf.function
+    def preprocess(img):
+        img = tf.cast(img, dtype=tf.float32)
+        DATASET_MEANS = [0.485, 0.456, 0.406]  # imagenet means RGB
+        DATASET_STDS = [0.229, 0.224, 0.225]
+
+        img /= 255.
+        img -= [[DATASET_MEANS]]
+        img /= [[DATASET_STDS]]
+        return img
+
+    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite0_200_57ap_200epoch.h5", 
             custom_objects={
                         'relu6': tf.nn.relu6,
                         'WarmupCosineDecay': WarmupCosineDecay
             })
-
-    
+    # # new_model = tf.keras.Sequential()
+    # # new_model.add(tf.keras.layers.Lambda(preprocess))
+    # # new_model.add(tf.keras.layers.experimental.preprocessing.Resizing(cfg.DATASET.INPUT_SHAPE[0], cfg.DATASET.INPUT_SHAPE[1]))
+    # # new_model.add(model)
+    # # new_model.add(tf.keras.layers.Lambda(get_preds))
 
     # images = prediction_examples(model, cfg)
     # for img in images:
@@ -122,26 +100,26 @@ if __name__ == '__main__':
     
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.representative_dataset = representative_dataset2
+    # converter.representative_dataset = representative_dataset2
     tflite_quant_model = converter.convert()
 
-    TFLITE_FILE_PATH = 'models/eflite0_int.tflite'
+    TFLITE_FILE_PATH = 'models/eflite0_float16_2.tflite'
 
     with open(TFLITE_FILE_PATH, 'wb') as f:
         f.write(tflite_quant_model)
 
-    images = prediction_tf_lite(TFLITE_FILE_PATH, cfg)
-    for img in images:
-        opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        cv2.imshow('', opencvImage)
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+    # images = prediction_tf_lite(TFLITE_FILE_PATH, cfg)
+    # for img in images:
+    #     opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    #     cv2.imshow('', opencvImage)
+    #     cv2.waitKey()
+    #     cv2.destroyAllWindows()
 
-    # interpreter = tf.lite.Interpreter(TFLITE_FILE_PATH)
-    # interpreter.allocate_tensors()
+    interpreter = tf.lite.Interpreter(TFLITE_FILE_PATH)
+    interpreter.allocate_tensors()
 
-    # input_details = interpreter.get_input_details()
-    # output_details = interpreter.get_output_details()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
 
     # input_shape = input_details[0]['shape']
     # for img in train_ds:
