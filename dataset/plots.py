@@ -73,6 +73,7 @@ def plot_image(img, pred_hm, valid):
     plt.show()
 
 def get_preds(hms, input_shape):
+    hms = tf.cast(hms, dtype=tf.float32)
     output_shape = hms.shape
     preds = np.zeros((output_shape[-1], 3))
     for j in range(preds.shape[0]):

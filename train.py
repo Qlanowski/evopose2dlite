@@ -199,6 +199,7 @@ if __name__ == '__main__':
             'WarmupCosineDecay': WarmupCosineDecay
         })
 
+    cfg.VAL.DROP_REMAINDER = False
     if args.val == 1:
         if cfg.DATASET.OUTPUT_SHAPE[-1] == 23:
             mAP, AP_50, AP_75, AP_small, AP_medium, AP_large = validate(strategy, cfg, model, clear_foot=False)
