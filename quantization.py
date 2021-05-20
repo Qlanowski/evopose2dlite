@@ -78,8 +78,8 @@ if __name__ == '__main__':
         img -= [[DATASET_MEANS]]
         img /= [[DATASET_STDS]]
         return img
-
-    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite0_200_57ap_200epoch.h5", 
+    print(tf.__version__)
+    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite0_f32.h5", 
             custom_objects={
                         'relu6': tf.nn.relu6,
                         'WarmupCosineDecay': WarmupCosineDecay
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # converter.representative_dataset = representative_dataset2
     tflite_quant_model = converter.convert()
 
-    TFLITE_FILE_PATH = 'models/eflite0_float16_2.tflite'
+    TFLITE_FILE_PATH = 'models/eflite0_float16_23.tflite'
 
     with open(TFLITE_FILE_PATH, 'wb') as f:
         f.write(tflite_quant_model)
