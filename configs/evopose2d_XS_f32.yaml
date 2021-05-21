@@ -21,7 +21,7 @@ TRAIN:
 
 VAL:
   BATCH_SIZE: 512
-  DROP_REMAINDER: true
+  DROP_REMAINDER: false
   DET: false
 
 DATASET:
