@@ -11,6 +11,9 @@ MODEL:
   ]
   LOAD_WEIGHTS: false
   FINAL_KERNEL: 1
+  LITE: true
+  DROPOUT: false
+  QUANTIZATION: true
 
 TRAIN:
   BATCH_SIZE: 256
