@@ -18,7 +18,7 @@ MODEL:
 
 TRAIN:
   BATCH_SIZE: 512
-  EPOCHS: 10
+  EPOCHS: 200
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
