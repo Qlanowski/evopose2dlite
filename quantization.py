@@ -79,7 +79,7 @@ if __name__ == '__main__':
         img /= [[DATASET_STDS]]
         return img
     print(tf.__version__)
-    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite0_f32.h5", 
+    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite4_bf16_hb.h5", 
             custom_objects={
                         'relu6': tf.nn.relu6,
                         'WarmupCosineDecay': WarmupCosineDecay
