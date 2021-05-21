@@ -18,8 +18,9 @@ VAL:
   DET: True
 
 DATASET:
-  TFRECORDS: 'gs://bucket/TF2-SimpleHumanPose/tfrecords'
-  ANNOT: '/home/user/coco/annotations/person_keypoints_val2017.json'
+  OUTPUT_SHAPE: [-1, -1, 23]
+  TFRECORDS: 'gs://rangle/tfrecords_foot'
+  ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: true
 
