@@ -38,30 +38,24 @@ VAL:
   FINAL_KERNEL: 1
 
 TRAIN:
-  BATCH_SIZE: 128
+  BATCH_SIZE: 254
   EPOCHS: 200
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
-  WANDB_RUN_ID: 'hvxt3j8a'
-  INITIAL_EPOCH: 15
+  # WANDB_RUN_ID: 'hvxt3j8a'
+  # INITIAL_EPOCH: 15
 
 VAL:
-  BATCH_SIZE: 128
+  BATCH_SIZE: 254
   DROP_REMAINDER: true
   DET: false
 
 DATASET:
   INPUT_SHAPE: [384, 288, 3]
+  OUTPUT_SHAPE: [-1, -1, 23]
   TFRECORDS: 'gs://rangle/tfrecords_foot'
   ANNOT: './data/annotations'
   CACHE: true
   BFLOAT16: true
   DET: false
-
-DATASET:
-  INPUT_SHAPE: [384, 288, 3]
-  TFRECORDS: 'gs://rangle/tfrecords_foot'
-  ANNOT: './data/annotations'
-  CACHE: true
-  BFLOAT16: true
