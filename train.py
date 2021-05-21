@@ -138,7 +138,7 @@ def train(strategy, cfg):
                 model = EfficientNet(cfg)
 
             model.compile(optimizer=optimizer, loss=mse)
-    model.save("models/simple_baseline.h5")
+
     cfg.DATASET.OUTPUT_SHAPE = model.output_shape[1:]
     cfg.DATASET.SIGMA = 2 * cfg.DATASET.OUTPUT_SHAPE[0] / 64
 
