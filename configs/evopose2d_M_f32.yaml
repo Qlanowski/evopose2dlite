@@ -13,14 +13,14 @@ MODEL:
   FINAL_KERNEL: 1
 
 TRAIN:
-  BATCH_SIZE: 128
+  BATCH_SIZE: 64
   EPOCHS: 200
   WARMUP_EPOCHS: 5
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
 
 VAL:
-  BATCH_SIZE: 128
+  BATCH_SIZE: 64
   DROP_REMAINDER: true
   DET: false
 
