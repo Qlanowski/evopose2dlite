@@ -19,7 +19,7 @@ TRAIN:
   LR_SCHEDULE: 'warmup_cosine_decay'
   SAVE_META: true
   WANDB_RUN_ID: '2z5u2n9h'
-  INITIAL_EPOCH: 108
+  INITIAL_EPOCH: 146
 
 VAL:
   BATCH_SIZE: 256
