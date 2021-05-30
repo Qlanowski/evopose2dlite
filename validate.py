@@ -165,13 +165,8 @@ def validate_tflite(cfg, result_path, interpreter, split='val', clear_foot=False
     ds = load_tfds(cfg, split, det=False,
                    predict_kp=True, drop_remainder=cfg.VAL.DROP_REMAINDER)
 
-    if os.path.isfile(result_path):
-        with open(result_path) as f:
-            results = json.load(f)
-    else:
-        results = []
-
-    results_codes = set([r['code'] for r in results])
+    
+    results = []
 
     start = datetime.now()
     skipped = 0
@@ -182,10 +177,6 @@ def validate_tflite(cfg, result_path, interpreter, split='val', clear_foot=False
         ids = ids.numpy()
         scores = scores.numpy()
         Ms = Ms.numpy()
-
-        if code in results_codes:
-            skipped+=1
-            continue
 
         input_data = np.array(imgs.numpy(), dtype=np.float32)
         interpreter.set_tensor(input_details[0]['index'], input_data)
@@ -212,7 +203,6 @@ def validate_tflite(cfg, result_path, interpreter, split='val', clear_foot=False
                             code = code,
                             keypoints=preds[i].reshape(-1).tolist(),
                             score=float(score_result[i])))
-        results_codes.add(code)
 
         if cfg.TRAIN.DISP:
             batches_count = cfg.DATASET.VAL_SAMPLES /cfg.VAL.BATCH_SIZE
