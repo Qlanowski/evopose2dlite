@@ -221,7 +221,7 @@ def validate_tflite(cfg, result_path, interpreter, split='val', clear_foot=False
             print(f'{count + 1}, Elapsed: {elapsed}, Remaining minutes: {remaining//60}')
             if (count + 1) * cfg.VAL.BATCH_SIZE >= cfg.DATASET.VAL_SAMPLES:
                 break
-        if count % 5 == 0:
+        if count % 100 == 0:
             with open(result_path, 'w') as f:
                 json.dump(results, f)
 
