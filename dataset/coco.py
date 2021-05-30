@@ -4,8 +4,8 @@ cn = CN(new_allowed=True)
 
 cn.DATASET = CN(new_allowed=True)
 cn.DATASET.NAME = 'COCO'
-cn.DATASET.TFRECORDS = r'C:\Users\ulano\source\repos\evopose2dlite\data\tfrecords_foot'
-cn.DATASET.ANNOT = r'C:\Users\ulano\source\repos\evopose2dlite\data\annotations\person_keypoints_val2017.json'
+cn.DATASET.TFRECORDS = r'.\data\tfrecords_foot'
+cn.DATASET.ANNOT = r'.\data\annotations\person_keypoints_val2017.json'
 cn.DATASET.RUN_EXAMPLES = r'run_examples'
 cn.DATASET.TRAIN_SAMPLES = 149813
 cn.DATASET.VAL_SAMPLES = 11004
