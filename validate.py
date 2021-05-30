@@ -12,6 +12,7 @@ import json
 import cv2
 from utils import detect_hardware, suppress_stdout, merge_coco_annotations
 import pickle
+from datetime import datetime
 
 
 def get_preds(hms, Ms, input_shape, output_shape):
@@ -129,6 +130,100 @@ def validate(strategy, cfg, model=None, split='val', clear_foot=False):
                                 score=float(score_result[i])))
         if cfg.TRAIN.DISP:
             print('completed preds batch', count + 1)
+
+    with open(result_path, 'w') as f:
+        json.dump(results, f)
+
+    if split == 'val':
+        with suppress_stdout():
+            result = coco.loadRes(result_path)
+            cocoEval = COCOeval(coco, result, iouType='keypoints')
+            cocoEval.evaluate()
+            cocoEval.accumulate()
+            cocoEval.summarize()
+        mAP = cocoEval.stats[0]
+        AP_50 = cocoEval.stats[1]
+        AP_75 = cocoEval.stats[2]
+        AP_small = cocoEval.stats[3]
+        AP_medium = cocoEval.stats[4]
+        AP_large = cocoEval.stats[5]
+        return mAP, AP_50, AP_75, AP_small, AP_medium, AP_large  # AP
+
+def validate_tflite(cfg, result_path, interpreter, split='val', clear_foot=False):
+    cfg.DATASET.CACHE = False
+
+    if split == 'val':
+        with suppress_stdout():
+            coco = merge_coco_annotations(cfg.DATASET.ANNOT, split, clear_foot)
+
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    cfg.DATASET.OUTPUT_SHAPE = list(output_details[0]['shape'][1:])
+    cfg.DATASET.INPUT_SHAPE = list(input_details[0]['shape'][1:])
+    interpreter.allocate_tensors()
+
+    ds = load_tfds(cfg, split, det=False,
+                   predict_kp=True, drop_remainder=cfg.VAL.DROP_REMAINDER)
+
+    if os.path.isfile(result_path):
+        with open(result_path) as f:
+            results = json.load(f)
+    else:
+        results = []
+
+    results_codes = set([r['code'] for r in results])
+
+    start = datetime.now()
+    skipped = 0
+    for count, batch in enumerate(ds):
+        ids, imgs, _, Ms, scores, kp_id = batch
+        code = str(kp_id.numpy()[0])
+
+        ids = ids.numpy()
+        scores = scores.numpy()
+        Ms = Ms.numpy()
+
+        if code in results_codes:
+            skipped+=1
+            continue
+
+        input_data = np.array(imgs.numpy(), dtype=np.float32)
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
+        hms = interpreter.get_tensor(output_details[0]['index'])
+
+        preds = get_preds(hms, Ms, cfg.DATASET.INPUT_SHAPE, cfg.DATASET.OUTPUT_SHAPE)
+        all_preds = np.zeros((preds.shape[0],23,3))
+        all_preds[:,:preds.shape[1],:] = preds
+        preds = all_preds
+        kp_scores = preds[:, :, -1].copy()
+
+        # rescore
+        rescored_score = np.zeros((len(kp_scores)))
+        for i in range(len(kp_scores)):
+            score_mask = kp_scores[i] > cfg.VAL.SCORE_THRESH
+            if np.sum(score_mask) > 0:
+                rescored_score[i] = np.mean(kp_scores[i][score_mask]) * scores[i]
+        score_result = rescored_score
+
+        i = 0
+        results.append(dict(image_id=int(ids[i]),
+                            category_id=1,
+                            code = code,
+                            keypoints=preds[i].reshape(-1).tolist(),
+                            score=float(score_result[i])))
+        results_codes.add(code)
+
+        if cfg.TRAIN.DISP:
+            batches_count = cfg.DATASET.VAL_SAMPLES /cfg.VAL.BATCH_SIZE
+            elapsed = datetime.now()-start
+            remaining = elapsed.seconds / (count - skipped + 1) * batches_count - elapsed.seconds
+            print(f'{count + 1}, Elapsed: {elapsed}, Remaining minutes: {remaining//60}')
+            if (count + 1) * cfg.VAL.BATCH_SIZE >= cfg.DATASET.VAL_SAMPLES:
+                break
+        if count % 5 == 0:
+            with open(result_path, 'w') as f:
+                json.dump(results, f)
 
     with open(result_path, 'w') as f:
         json.dump(results, f)

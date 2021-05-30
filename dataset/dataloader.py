@@ -66,6 +66,10 @@ def transform(img, scale, angle, bbox_center, output_shape):
 def preprocess(id, img, bbox, kp, score, DATASET, split='train', predict_kp=False):
     img = tf.cast(img, tf.float32)
     kp = tf.cast(kp, tf.float32)
+    kp_id = tf.cast(kp, tf.int32)
+    kp_id = tf.reshape(kp_id, [-1])
+    kp_id = tf.strings.as_string(kp_id)
+    kp_id = tf.strings.reduce_join(kp_id)
 
     if DATASET.BGR:
         img = tf.gather(img, [2, 1, 0], axis=-1)
@@ -136,7 +140,7 @@ def preprocess(id, img, bbox, kp, score, DATASET, split='train', predict_kp=Fals
         img = tf.cast(img, tf.bfloat16)
 
     if predict_kp:
-        return id, img, kp, M, score
+        return id, img, kp, M, score, kp_id
     else:
         return img, kp
 
@@ -222,7 +226,7 @@ def load_tfds(cfg, split, det=False, predict_kp=False, drop_remainder=True, visu
         ds = ds.batch(cfg.VAL.BATCH_SIZE, drop_remainder=drop_remainder).prefetch(AUTO)
 
     if visualize:
-        ds = ds.map(lambda ids, imgs, kps, Ms, scores: (ids, imgs, kps, Ms, scores, *generate_heatmaps(kps, cfg.DATASET)),
+        ds = ds.map(lambda ids, imgs, kps, Ms, scores, kp_id: (ids, imgs, kps, Ms, scores, *generate_heatmaps(kps, cfg.DATASET) ,kp_id),
                     num_parallel_calls=AUTO)
         return ds
     if not predict_kp:

@@ -7,6 +7,7 @@ from lr_schedules import WarmupCosineDecay, WarmupPiecewise
 import os.path as osp
 from utils import detect_hardware
 from dataset.dataloader import load_representative_tfds, visualize, prediction_tf_lite, prediction_examples
+import dataset.dataloader as dl
 from dataset.coco import cn as cfg
 import argparse
 from lr_schedules import WarmupCosineDecay
@@ -25,25 +26,12 @@ if __name__ == '__main__':
     cfg.merge_from_file('configs/' + args.cfg)
     cfg.MODEL.NAME = args.cfg.split('.yaml')[0]
 
-    if cfg.DATASET.OUTPUT_SHAPE[-1] == 17:
-        cfg.DATASET.KP_FLIP = cfg.DATASET.KP_FLIP[:17]
 
     cfg.MODEL.TFRECORDS = 'data/tfrecords_foot/val'
-    train_ds = load_representative_tfds(cfg)
+    train_ds = None#load_representative_tfds(cfg)
 
     def representative_dataset():
         for img in train_ds:
-            yield [img]
-
-    def representative_dataset_gen():
-        num_calibration_images = 200
-        for i in range(num_calibration_images):
-            image = tf.random.normal([1] + cfg.DATASET.INPUT_SHAPE)
-            yield [image]
-
-
-    def representative_dataset2():
-        for img in l:
             yield [img]
 
     def get_preds(hms):
@@ -68,27 +56,81 @@ if __name__ == '__main__':
 
         return preds
     
-    @tf.function
-    def preprocess(img):
-        img = tf.cast(img, dtype=tf.float32)
-        DATASET_MEANS = [0.485, 0.456, 0.406]  # imagenet means RGB
-        DATASET_STDS = [0.229, 0.224, 0.225]
-
-        img /= 255.
-        img -= [[DATASET_MEANS]]
-        img /= [[DATASET_STDS]]
-        return img
     print(tf.__version__)
-    model = tf.keras.models.load_model(r"C:\Users\ulano\source\repos\evopose2dlite\models\eflite4_bf16_hb.h5", 
-            custom_objects={
-                        'relu6': tf.nn.relu6,
-                        'WarmupCosineDecay': WarmupCosineDecay
-            })
-    # # new_model = tf.keras.Sequential()
-    # # new_model.add(tf.keras.layers.Lambda(preprocess))
-    # # new_model.add(tf.keras.layers.experimental.preprocessing.Resizing(cfg.DATASET.INPUT_SHAPE[0], cfg.DATASET.INPUT_SHAPE[1]))
-    # # new_model.add(model)
-    # # new_model.add(tf.keras.layers.Lambda(get_preds))
+
+    def quant_float(folder, model_name):
+        model_path = f'{folder}/{model_name}.h5'
+        model = tf.keras.models.load_model(model_path, 
+                custom_objects={
+                            'relu6': tf.nn.relu6,
+                            'WarmupCosineDecay': WarmupCosineDecay
+                })
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        tflite_quant_model = converter.convert()
+
+        TFLITE_FILE_PATH = f'{folder}/{model_name}_float16.tflite'
+
+        with open(TFLITE_FILE_PATH, 'wb') as f:
+            f.write(tflite_quant_model)
+        
+        print(model_name)
+
+    def quant_int(folder, model_name, input_size):
+        def representative_dataset_gen():
+            num_calibration_images = 200
+            for i in range(num_calibration_images):
+                image = tf.random.normal([1] + input_size)
+                yield [image]
+
+        model_path = f'{folder}/{model_name}.h5'
+        model = tf.keras.models.load_model(model_path, 
+                custom_objects={
+                            'relu6': tf.nn.relu6,
+                            'WarmupCosineDecay': WarmupCosineDecay
+                })
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.representative_dataset = representative_dataset_gen
+        tflite_quant_model = converter.convert()
+
+        TFLITE_FILE_PATH = f'{folder}/{model_name}_int.tflite'
+
+        with open(TFLITE_FILE_PATH, 'wb') as f:
+            f.write(tflite_quant_model)
+        
+        print(model_name)
+
+    # ds = dl.load_tfds(cfg, 'train', det=False, predict_kp=True, drop_remainder=False, visualize=True)
+    # for i, (ids, imgs, kps, Ms, scores, hms, valids) in enumerate(ds):
+    #     print(i)
+    ds = dl.load_tfds(cfg, 'train', det=False, predict_kp=True, drop_remainder=False, visualize=True)
+    for i, (ids, imgs, kps, Ms, scores, hms, valids) in enumerate(ds):
+        print("a")
+    for img in enumerate(train_ds):
+        print(img.shape)
+    # quant_float('models/eflite', 'eflite_0_f32_1s438o9s')
+    # quant_float('models/eflite', 'eflite_4_f32_2aqxr0tj')
+
+    # quant_float('models/evo', 'evo_XS_f32_3k83fz2x')
+    # quant_float('models/evo', 'evo_S_f32_2z5u2n9h')
+    # quant_float('models/evo', 'evo_M_f32_2mknlo85')
+
+    # quant_float('models/evolite', 'evolite_XS_f32_3bxk1z2i')
+    # quant_float('models/evolite', 'evolite_S_f32_2q6wypd1')
+    # quant_float('models/evolite', 'evolite_M_f32_24yaz1ej')
+
+    quant_int('models/eflite', 'eflite_0_f32_1s438o9s', [224,224,3])
+    # quant_int('models/eflite', 'eflite_4_f32_2aqxr0tj', [224,224,3])
+
+    # quant_int('models/evo', 'evo_XS_f32_3k83fz2x', [256, 192, 3])
+    # quant_int('models/evo', 'evo_S_f32_2z5u2n9h', [256, 192, 3])
+    # quant_int('models/evo', 'evo_M_f32_2mknlo85', [384, 288, 3])
+
+    # quant_int('models/evolite', 'evolite_XS_f32_3bxk1z2i', [256, 192, 3])
+    # quant_int('models/evolite', 'evolite_S_f32_2q6wypd1', [256, 192, 3])
+    # quant_int('models/evolite', 'evolite_M_f32_24yaz1ej', [384, 288, 3])
+
 
     # images = prediction_examples(model, cfg)
     # for img in images:
@@ -97,29 +139,19 @@ if __name__ == '__main__':
     #     cv2.waitKey()
     #     cv2.destroyAllWindows()
 
-    
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    # converter.representative_dataset = representative_dataset2
-    tflite_quant_model = converter.convert()
 
-    TFLITE_FILE_PATH = 'models/eflite0_float16_23.tflite'
+    images = prediction_tf_lite(TFLITE_FILE_PATH, cfg)
+    for img in images:
+        opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        cv2.imshow('', opencvImage)
+        cv2.waitKey()
+        cv2.destroyAllWindows()
 
-    with open(TFLITE_FILE_PATH, 'wb') as f:
-        f.write(tflite_quant_model)
+    # interpreter = tf.lite.Interpreter(TFLITE_FILE_PATH)
+    # interpreter.allocate_tensors()
 
-    # images = prediction_tf_lite(TFLITE_FILE_PATH, cfg)
-    # for img in images:
-    #     opencvImage = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-    #     cv2.imshow('', opencvImage)
-    #     cv2.waitKey()
-    #     cv2.destroyAllWindows()
-
-    interpreter = tf.lite.Interpreter(TFLITE_FILE_PATH)
-    interpreter.allocate_tensors()
-
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
+    # input_details = interpreter.get_input_details()
+    # output_details = interpreter.get_output_details()
 
     # input_shape = input_details[0]['shape']
     # for img in train_ds:
