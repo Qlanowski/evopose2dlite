@@ -15,7 +15,7 @@ from dataset.coco import cn as cfg
 cfg.DATASET.NORM = False
 cfg.DATASET.BGR = True
 cfg.DATASET.HALF_BODY_PROB = 0
-cfg.MODEL.TFRECORDS = 'gs://rangle/tfrecords_foot'
+cfg.DATASET.TFRECORDS = 'gs://rangle/tfrecords_foot'
 # cfg.DATASET.VAL_SAMPLES = 10
 cfg.VAL.BATCH_SIZE = 1
 cfg.TRAIN.BATCH_SIZE = 1
